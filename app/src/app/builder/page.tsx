@@ -7,6 +7,7 @@ import { TipsPanel } from "@/components/TipsPanel";
 import { ScorePanel } from "@/components/ScorePanel";
 import { JobMatchPanel } from "@/components/JobMatchPanel";
 import { ResumeDocument } from "@/components/preview/ResumeDocument";
+import { PdfReviewModal } from "@/components/PdfReviewModal";
 import { Button } from "@/components/ui";
 import { getResumeData, useResumeStore } from "@/lib/store";
 import { A4_HEIGHT_PX, usePageEstimate } from "@/lib/usePageEstimate";
@@ -22,19 +23,11 @@ export default function BuilderPage() {
   const loadData = useResumeStore((s) => s.loadData);
   const [tab, setTab] = useState<Tab>("form");
   const [importingPdf, setImportingPdf] = useState(false);
+  const [pdfReview, setPdfReview] = useState<Partial<ResumeData> | null>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const pages = usePageEstimate(previewRef);
-
-  function hasExistingContent() {
-    const s = useResumeStore.getState();
-    return (
-      s.personal.fullName.trim() !== "" ||
-      s.summary.trim() !== "" ||
-      s.experiences.some((e) => e.org.trim())
-    );
-  }
 
   function handleExport() {
     const data = getResumeData(useResumeStore.getState());
@@ -72,28 +65,11 @@ export default function BuilderPage() {
     e.target.value = "";
     if (!file) return;
 
-    if (
-      hasExistingContent() &&
-      !confirm(
-        locale === "pt-br"
-          ? "Isso vai substituir os dados atuais pelo que conseguirmos extrair do PDF. Continuar?"
-          : "This will replace your current data with what we can extract from the PDF. Continue?",
-      )
-    ) {
-      return;
-    }
-
     setImportingPdf(true);
     try {
       const text = await extractPdfText(file);
       const parsed = parseResumeText(text);
-      loadData(parsed);
-      alert(
-        locale === "pt-br"
-          ? "Importação feita! A leitura de PDF é aproximada — revise e reorganize os campos abaixo, principalmente empresa/cargo/datas."
-          : "Import done! PDF reading is approximate — please review and reorganize the fields below, especially company/role/dates.",
-      );
-      setTab("form");
+      setPdfReview(parsed);
     } catch {
       alert(
         locale === "pt-br"
@@ -274,6 +250,19 @@ export default function BuilderPage() {
       <div className="hidden print:block">
         <ResumeDocument printable />
       </div>
+
+      {pdfReview && (
+        <PdfReviewModal
+          data={pdfReview}
+          locale={locale}
+          onCancel={() => setPdfReview(null)}
+          onApply={(selected) => {
+            loadData(selected);
+            setPdfReview(null);
+            setTab("form");
+          }}
+        />
+      )}
     </div>
   );
 }
