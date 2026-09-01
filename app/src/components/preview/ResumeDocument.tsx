@@ -14,7 +14,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function EntryRow({ entry }: { entry: Entry }) {
   return (
-    <div className="mb-2">
+    <div className="mb-2 break-inside-avoid">
       <div className="flex items-baseline justify-between text-[11.5px]">
         <span className="font-bold text-slate-900">{entry.org}</span>
         <span className="text-slate-700">{entry.location}</span>
@@ -40,7 +40,7 @@ function EntryRow({ entry }: { entry: Entry }) {
 
 function EducationRow({ entry }: { entry: EducationEntry }) {
   return (
-    <div className="mb-2">
+    <div className="mb-2 break-inside-avoid">
       <div className="flex items-baseline justify-between text-[11.5px]">
         <span className="font-bold text-slate-900">{entry.institution}</span>
         <span className="text-slate-700">{entry.location}</span>
@@ -59,7 +59,7 @@ function EducationRow({ entry }: { entry: EducationEntry }) {
 
 function ProjectRow({ entry }: { entry: ProjectEntry }) {
   return (
-    <div className="mb-1.5 text-[11px] text-slate-800">
+    <div className="mb-1.5 break-inside-avoid text-[11px] text-slate-800">
       <span className="font-bold text-slate-900">{entry.name}</span>
       {entry.link && <span className="text-slate-600"> — {entry.link}</span>}
       {entry.description && <p className="text-slate-700">{entry.description}</p>}
