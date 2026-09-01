@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type {
-  Entry,
-  EducationEntry,
-  ProjectEntry,
-  Locale,
-  ResumeData,
+import {
+  RESUME_DATA_KEYS,
+  type Entry,
+  type EducationEntry,
+  type ProjectEntry,
+  type Locale,
+  type ResumeData,
 } from "./types";
 
 function uid() {
@@ -58,7 +59,16 @@ const initialState: ResumeData = {
   education: [emptyEducation()],
   projects: [],
   skills: { technical: "", languages: "" },
+  jobDescription: "",
 };
+
+function withIds<T extends { id?: string }>(items: unknown): (T & { id: string })[] {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => ({
+    ...(item as T),
+    id: typeof (item as T).id === "string" && (item as T).id ? (item as T).id! : uid(),
+  }));
+}
 
 interface ResumeStore extends ResumeData {
   setLocale: (l: Locale) => void;
@@ -83,8 +93,19 @@ interface ResumeStore extends ResumeData {
   removeProject: (id: string) => void;
 
   setSkills: (patch: Partial<ResumeData["skills"]>) => void;
+  setJobDescription: (v: string) => void;
 
+  loadData: (data: Partial<ResumeData>) => void;
   reset: () => void;
+}
+
+export function getResumeData(state: ResumeData): ResumeData {
+  const data = {} as ResumeData;
+  for (const key of RESUME_DATA_KEYS) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (data as any)[key] = state[key];
+  }
+  return data;
 }
 
 export const useResumeStore = create<ResumeStore>()(
@@ -152,6 +173,22 @@ export const useResumeStore = create<ResumeStore>()(
 
       setSkills: (patch) =>
         set((state) => ({ skills: { ...state.skills, ...patch } })),
+      setJobDescription: (jobDescription) => set({ jobDescription }),
+
+      loadData: (data) =>
+        set((state) => ({
+          locale: data.locale === "en" ? "en" : data.locale === "pt-br" ? "pt-br" : state.locale,
+          studentMode: typeof data.studentMode === "boolean" ? data.studentMode : state.studentMode,
+          personal: data.personal ? { ...state.personal, ...data.personal } : state.personal,
+          summary: typeof data.summary === "string" ? data.summary : state.summary,
+          experiences: data.experiences ? withIds<Entry>(data.experiences) : state.experiences,
+          leadership: data.leadership ? withIds<Entry>(data.leadership) : state.leadership,
+          education: data.education ? withIds<EducationEntry>(data.education) : state.education,
+          projects: data.projects ? withIds<ProjectEntry>(data.projects) : state.projects,
+          skills: data.skills ? { ...state.skills, ...data.skills } : state.skills,
+          jobDescription:
+            typeof data.jobDescription === "string" ? data.jobDescription : state.jobDescription,
+        })),
 
       reset: () => set({ ...initialState, experiences: [emptyEntry()], education: [emptyEducation()] }),
     }),

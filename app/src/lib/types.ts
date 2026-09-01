@@ -52,4 +52,18 @@ export interface ResumeData {
   education: EducationEntry[];
   projects: ProjectEntry[];
   skills: SkillsData;
+  jobDescription: string;
 }
+
+export const RESUME_DATA_KEYS: (keyof ResumeData)[] = [
+  "locale",
+  "studentMode",
+  "personal",
+  "summary",
+  "experiences",
+  "leadership",
+  "education",
+  "projects",
+  "skills",
+  "jobDescription",
+];

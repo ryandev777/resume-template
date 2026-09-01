@@ -20,6 +20,8 @@
 
 A professional, clean, and easy-to-use resume template built with LaTeX. **You don't need to be a programmer to use it!**
 
+> 🧑‍💻 **New:** there is now a guided web app (Next.js) that builds your resume from a form and exports it straight to PDF, with built-in ATS/STAR tips. See [`/app`](app/README.md).
+
 ## 🧩 How to use (No coding required)
 
 If you are not familiar with GitHub or coding, the easiest way to edit your resume is using **[Prism](https://prism.openai.com/)**, an AI-powered code editor. 
@@ -82,6 +84,8 @@ Alternatively, if you are familiar with GitHub, each push (upload of code) to th
 # Modelo de Currículo em LaTeX
 
 Um modelo de currículo profissional, limpo e fácil de usar, feito em LaTeX. **Você não precisa ser um programador para usar ele!**
+
+> 🧑‍💻 **Novidade:** agora existe também um gerador web (Next.js) que monta seu currículo a partir de um formulário guiado e exporta direto em PDF, com dicas de ATS/método STAR embutidas. Veja [`/app`](app/README.md).
 
 ## 🧩 Como usar (Sem precisar programar)
 

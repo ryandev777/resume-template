@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gerador de Currículo (Web App)
 
-## Getting Started
+Aplicação Next.js + Tailwind que gera um currículo em PT-BR ou EN a partir de um formulário guiado, com dicas de conteúdo (método STAR, verbos de ação, boas práticas de ATS) e exportação em PDF pelo próprio navegador.
 
-First, run the development server:
+- **Sem backend, sem login:** todos os dados ficam salvos apenas no `localStorage` do navegador.
+- **Sem custo:** hospedagem gratuita na [Vercel](https://vercel.com).
+
+## Rodando localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse `http://localhost:3000` e depois `/builder`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy na Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Suba este repositório para o GitHub.
+2. Na Vercel, clique em "New Project", selecione o repositório e defina o **Root Directory** como `app`.
+3. A Vercel detecta o Next.js automaticamente — não é necessário configurar variáveis de ambiente.
 
-## Learn More
+## Estrutura
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app` — rotas (`/` landing, `/builder` o gerador)
+- `src/components/forms` — formulários de cada seção do currículo
+- `src/components/preview/ResumeDocument.tsx` — o template do currículo (também usado na exportação em PDF via impressão do navegador)
+- `src/lib/store.ts` — estado global (Zustand) persistido em `localStorage`
+- `src/lib/content.ts` — todos os textos, labels, dicas e verbos de ação, em PT-BR e EN
