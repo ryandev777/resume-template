@@ -9,6 +9,18 @@ export interface CheckItem {
 
 const HAS_DIGIT = /\d/;
 
+/** True when the user hasn't filled in anything meaningful yet — used to show onboarding
+ * hints instead of a checklist/job-match view that would otherwise look broken or empty. */
+export function isResumeEmpty(data: ResumeData): boolean {
+  return (
+    !data.personal.fullName.trim() &&
+    !data.summary.trim() &&
+    !data.experiences.some((e) => e.org.trim() || e.bullets.some((b) => b.trim())) &&
+    !data.skills.technical.trim() &&
+    !data.education.some((e) => e.institution.trim())
+  );
+}
+
 export function computeChecklist(data: ResumeData, locale: Locale): CheckItem[] {
   const experiences = data.experiences.filter((e) => e.org.trim());
   const allBullets = [

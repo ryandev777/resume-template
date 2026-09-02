@@ -1,13 +1,18 @@
 "use client";
 
-import { computeChecklist } from "@/lib/score";
+import { useShallow } from "zustand/react/shallow";
+import { computeChecklist, isResumeEmpty } from "@/lib/score";
 import { getResumeData, useResumeStore } from "@/lib/store";
 
 export function ScorePanel() {
   const locale = useResumeStore((s) => s.locale);
-  const data = useResumeStore((s) => getResumeData(s));
+  // getResumeData builds a new object every call, so without useShallow every render sees a
+  // "changed" snapshot — React's getSnapshot-consistency check then logs "should be cached to
+  // avoid an infinite loop" (visible in the console/dev overlay on every keystroke).
+  const data = useResumeStore(useShallow((s) => getResumeData(s)));
   const checks = computeChecklist(data, locale);
   const passedCount = checks.filter((c) => c.passed).length;
+  const empty = isResumeEmpty(data);
 
   return (
     <div className="space-y-4">
@@ -17,10 +22,28 @@ export function ScorePanel() {
         </h2>
         <p className="text-sm text-slate-500">
           {locale === "pt-br"
-            ? "Regras simples, sem IA — só para não esquecer o básico."
-            : "Simple rules, no AI — just to avoid missing the basics."}
+            ? "Regras simples, sem IA, que checam automaticamente conforme você preenche o formulário — sem precisar clicar em nada."
+            : "Simple, no-AI rules that check automatically as you fill in the form — nothing to click."}
         </p>
       </div>
+
+      {empty && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          {locale === "pt-br" ? (
+            <>
+              Nada preenchido ainda, por isso tudo abaixo está com &quot;–&quot;. Vá para a aba{" "}
+              <span className="font-semibold">Formulário</span> e preencha nome, resumo,
+              experiência etc. — volte aqui a qualquer momento para ver o que ainda falta.
+            </>
+          ) : (
+            <>
+              Nothing filled in yet, so everything below shows &quot;–&quot;. Go to the{" "}
+              <span className="font-semibold">Form</span> tab and fill in your name, summary,
+              experience, etc. — come back here anytime to see what&apos;s still missing.
+            </>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <div className="text-2xl font-bold text-slate-900">

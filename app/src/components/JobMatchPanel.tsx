@@ -1,15 +1,20 @@
 "use client";
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { Textarea } from "@/components/ui";
 import { matchKeywords } from "@/lib/keywords";
+import { isResumeEmpty } from "@/lib/score";
 import { getResumeData, useResumeStore } from "@/lib/store";
 
 export function JobMatchPanel() {
   const locale = useResumeStore((s) => s.locale);
   const jobDescription = useResumeStore((s) => s.jobDescription);
   const setJobDescription = useResumeStore((s) => s.setJobDescription);
-  const data = useResumeStore((s) => getResumeData(s));
+  // See ScorePanel.tsx — getResumeData returns a new object every call, so it needs useShallow
+  // or React logs "getSnapshot should be cached to avoid an infinite loop" on every render.
+  const data = useResumeStore(useShallow((s) => getResumeData(s)));
+  const resumeEmpty = isResumeEmpty(data);
 
   const results = useMemo(
     () => (jobDescription.trim() ? matchKeywords(jobDescription, data, locale) : []),
@@ -32,6 +37,24 @@ export function JobMatchPanel() {
         </p>
       </div>
 
+      {resumeEmpty && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          {locale === "pt-br" ? (
+            <>
+              Seu currículo ainda está vazio — preencha a aba{" "}
+              <span className="font-semibold">Formulário</span> primeiro, ou a comparação abaixo
+              não vai encontrar nenhuma palavra-chave em comum.
+            </>
+          ) : (
+            <>
+              Your resume is still empty — fill in the{" "}
+              <span className="font-semibold">Form</span> tab first, or the comparison below
+              won&apos;t find any keywords in common.
+            </>
+          )}
+        </div>
+      )}
+
       <Textarea
         rows={8}
         value={jobDescription}
@@ -42,6 +65,24 @@ export function JobMatchPanel() {
         }
         onChange={(e) => setJobDescription(e.target.value)}
       />
+
+      {!jobDescription.trim() && (
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-500">
+          {locale === "pt-br" ? (
+            <>
+              Ainda não há nada colado aqui. Assim que você colar a vaga, aparece: quantas
+              palavras-chave da vaga já estão no seu currículo, quais estão faltando (para você
+              considerar incluir) e quais já estão presentes.
+            </>
+          ) : (
+            <>
+              Nothing pasted here yet. Once you paste a job post, you&apos;ll see: how many of its
+              keywords already appear in your resume, which ones are missing (worth considering),
+              and which ones are already covered.
+            </>
+          )}
+        </div>
+      )}
 
       {results.length > 0 && (
         <div className="space-y-4">
