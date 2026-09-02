@@ -46,6 +46,7 @@ const initialState: ResumeData = {
   studentMode: false,
   personal: {
     fullName: "",
+    headline: "",
     location: "",
     email: "",
     phone: "",

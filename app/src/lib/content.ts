@@ -23,6 +23,7 @@ export const content: Record<
     ],
     labels: {
       fullName: "Nome completo",
+      headline: "Título profissional",
       location: "Cidade, Estado",
       email: "E-mail",
       phone: "Telefone",
@@ -47,6 +48,7 @@ export const content: Record<
     },
     placeholders: {
       fullName: "Seu Nome Completo",
+      headline: "Ex: Desenvolvedor Full Stack (Node.js | React)",
       location: "São Paulo, SP",
       email: "seu.email@exemplo.com",
       phone: "(11) 91234-5678",
@@ -134,6 +136,7 @@ export const content: Record<
     ],
     labels: {
       fullName: "Full name",
+      headline: "Professional headline",
       location: "City, State",
       email: "Email",
       phone: "Phone",
@@ -158,6 +161,7 @@ export const content: Record<
     },
     placeholders: {
       fullName: "Your Full Name",
+      headline: "Ex: Full Stack Developer (Node.js | React)",
       location: "Remote / State, Country",
       email: "your.email@example.com",
       phone: "+1 (555) 123-4567",

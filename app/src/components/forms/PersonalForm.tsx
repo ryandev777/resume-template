@@ -23,6 +23,13 @@ export function PersonalForm() {
             onChange={(e) => setPersonal({ fullName: e.target.value })}
           />
         </Field>
+        <Field label={t.labels.headline}>
+          <Input
+            value={personal.headline}
+            placeholder={t.placeholders.headline}
+            onChange={(e) => setPersonal({ headline: e.target.value })}
+          />
+        </Field>
         <Field label={t.labels.location}>
           <Input
             value={personal.location}

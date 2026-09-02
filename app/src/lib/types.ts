@@ -2,6 +2,7 @@ export type Locale = "pt-br" | "en";
 
 export interface PersonalInfo {
   fullName: string;
+  headline: string;
   location: string;
   email: string;
   phone: string;

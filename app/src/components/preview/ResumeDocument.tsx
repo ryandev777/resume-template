@@ -62,7 +62,9 @@ function ProjectRow({ entry }: { entry: ProjectEntry }) {
     <div className="mb-1.5 break-inside-avoid text-[11px] text-slate-800">
       <span className="font-bold text-slate-900">{entry.name}</span>
       {entry.link && <span className="text-slate-600"> — {entry.link}</span>}
-      {entry.description && <p className="text-slate-700">{entry.description}</p>}
+      {entry.description && (
+        <p className="whitespace-pre-line text-slate-700">{entry.description}</p>
+      )}
     </div>
   );
 }
@@ -104,6 +106,9 @@ export function ResumeDocument({ printable = false }: { printable?: boolean }) {
         <h1 className="text-2xl font-bold">
           {state.personal.fullName || (state.locale === "pt-br" ? "Nome Completo" : "Full Name")}
         </h1>
+        {state.personal.headline && (
+          <p className="mt-0.5 text-[12px] text-slate-800">{state.personal.headline}</p>
+        )}
         <p className="mt-0.5 text-[11px] text-slate-700">
           {contactParts.length > 0 ? contactParts.join("  •  ") : ""}
         </p>

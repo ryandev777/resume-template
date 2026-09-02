@@ -28,12 +28,22 @@ function buildSections(data: Partial<ResumeData>, locale: Locale): SectionInfo[]
   const sections: SectionInfo[] = [];
 
   const p = data.personal;
-  if (p && (nonEmpty(p.fullName) || nonEmpty(p.email) || nonEmpty(p.phone) || nonEmpty(p.linkedin) || nonEmpty(p.github))) {
+  if (
+    p &&
+    (nonEmpty(p.fullName) ||
+      nonEmpty(p.headline) ||
+      nonEmpty(p.email) ||
+      nonEmpty(p.phone) ||
+      nonEmpty(p.linkedin) ||
+      nonEmpty(p.github))
+  ) {
     sections.push({
       key: "personal",
       title: pt ? "Dados pessoais" : "Personal info",
       preview: [
         p.fullName && `${pt ? "Nome" : "Name"}: ${p.fullName}`,
+        p.headline && `${pt ? "Título" : "Headline"}: ${p.headline}`,
+        p.location && `${pt ? "Localização" : "Location"}: ${p.location}`,
         p.email && `Email: ${p.email}`,
         p.phone && `${pt ? "Telefone" : "Phone"}: ${p.phone}`,
         p.linkedin && `LinkedIn: ${p.linkedin}`,
