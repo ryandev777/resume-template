@@ -60,12 +60,18 @@ export default function Home() {
           ATS realmente procuram, veja o resultado em tempo real e exporte em
           PDF — em português ou inglês.
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/builder"
             className="rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
           >
             Criar meu currículo
+          </Link>
+          <Link
+            href="/feed"
+            className="rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Ver notícias e vagas
           </Link>
         </div>
         <ul className="mt-12 grid max-w-2xl grid-cols-1 gap-3 text-left text-sm text-slate-600 sm:grid-cols-3">

@@ -96,6 +96,12 @@ export default function BuilderPage() {
           ← resume-template
         </Link>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/feed"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          >
+            {locale === "pt-br" ? "Notícias e vagas" : "News and jobs"}
+          </Link>
           <div className="flex overflow-hidden rounded-md border border-slate-300">
             <button
               type="button"
