@@ -1,7 +1,5 @@
 import type { EducationEntry, Entry, ResumeData } from "./types";
 
-const PDF_WORKER_VERSION = "6.3.289";
-
 /**
  * Extracts text from a PDF, one line per string, joined by "\n". A blank line ("")
  * is inserted wherever the vertical gap between two lines is noticeably larger than
@@ -11,7 +9,11 @@ const PDF_WORKER_VERSION = "6.3.289";
  */
 export async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDF_WORKER_VERSION}/pdf.worker.min.mjs`;
+  // Self-hosted (public/pdf.worker.min.mjs, kept in sync by scripts/copy-pdf-worker.mjs on
+  // postinstall) instead of a CDN — some networks (corporate proxies, privacy extensions,
+  // sandboxed browser portals) silently block cross-origin CDN scripts, which used to make
+  // PDF import hang with no visible error.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
@@ -207,8 +209,37 @@ function detectHeader(line: string): SectionType | null {
   return null;
 }
 
+const BULLET_MARKER_RE = /^[•\-*–▪●○]\s*/;
+
 function cleanBullet(line: string): string {
-  return line.replace(/^[•\-*–▪●○]\s*/, "").trim();
+  return line.replace(BULLET_MARKER_RE, "").trim();
+}
+
+/**
+ * Re-joins a run of physical PDF lines that are really one wrapped bullet (e.g. a long
+ * achievement sentence that spans 3-4 lines) back into a single bullet. A line is treated as
+ * a continuation — not a new bullet — when the previous line doesn't end in sentence-final
+ * punctuation (. ! ?) AND the line itself doesn't start with a bullet marker (•, -, *, ...).
+ * Must run on lines that still carry their original marker (before cleanBullet strips it),
+ * since that marker is the signal that a line is a genuinely new bullet.
+ */
+function mergeWrappedLines(lines: string[]): string[] {
+  const merged: string[] = [];
+  for (const raw of lines) {
+    if (raw === "") {
+      merged.push(raw);
+      continue;
+    }
+    const hasMarker = BULLET_MARKER_RE.test(raw);
+    const prev = merged.length > 0 ? merged[merged.length - 1] : "";
+    const prevEndsSentence = prev !== "" && /[.!?]$/.test(prev.trim());
+    if (prev !== "" && !hasMarker && !prevEndsSentence) {
+      merged[merged.length - 1] = `${prev} ${raw.trim()}`;
+    } else {
+      merged.push(raw);
+    }
+  }
+  return merged.map(cleanBullet).filter((l) => l !== "");
 }
 
 /**
@@ -292,7 +323,12 @@ function mergeHeaderGroups(groups: string[][]): { header: string; body: string[]
  * sentence ending in punctuation).
  */
 function looksLikeShortHeader(line: string): boolean {
-  const trimmed = line.trim();
+  // Lines are collected raw (marker + all — see the section-collection loop below) so
+  // mergeWrappedLines can tell a new bullet from a wrapped continuation. Header/date
+  // classification doesn't care about that marker and must strip it first, or a bulleted
+  // date/header line (some PDFs bullet every header line: "• Empresa | Cidade") fails
+  // every check here and gets misread as a bullet instead of a header.
+  const trimmed = cleanBullet(line);
   if (!trimmed) return false;
   const words = trimmed.split(/\s+/).length;
   if (trimmed.includes(" | ")) return words <= 14;
@@ -306,7 +342,7 @@ interface EntryHeaderBlock {
 
 /** A line that, once its date range is stripped out, has nothing left — e.g. "01/2022 - Atual". */
 function isDateOnlyLine(line: string): boolean {
-  const { text, startDate, endDate, current } = extractDateRange(line);
+  const { text, startDate, endDate, current } = extractDateRange(cleanBullet(line));
   return (Boolean(startDate) || Boolean(endDate) || current) && text.length === 0;
 }
 
@@ -379,8 +415,8 @@ function parseEntryHeader(headerLines: string[]): {
   let current = false;
   const textLines: string[] = [];
 
-  for (const line of headerLines) {
-    const parsed = extractDateRange(line);
+  for (const rawLine of headerLines) {
+    const parsed = extractDateRange(cleanBullet(rawLine));
     if (!startDate && !endDate && !current && (parsed.startDate || parsed.endDate || parsed.current)) {
       startDate = parsed.startDate;
       endDate = parsed.endDate;
@@ -425,19 +461,19 @@ function buildEntries(groups: string[][]): Entry[] {
         startDate: "",
         endDate: "",
         current: false,
-        bullets: groups.flat(),
+        bullets: groups.flatMap(mergeWrappedLines),
       },
     ];
   }
 
   return blocks.map((block) => {
     const { org, location, role, startDate, endDate, current } = parseEntryHeader(block.headerLines);
-    return { id: "", org, location, role, startDate, endDate, current, bullets: block.bullets };
+    return { id: "", org, location, role, startDate, endDate, current, bullets: mergeWrappedLines(block.bullets) };
   });
 }
 
 function buildEducationEntry(group: string[]): EducationEntry {
-  const raw = group.join(" ");
+  const raw = group.map(cleanBullet).join(" ");
   const { text, startDate, endDate } = extractDateRange(raw);
   const pipeIndex = text.indexOf(" | ");
   if (pipeIndex > -1) {
@@ -468,7 +504,7 @@ function buildEducationEntry(group: string[]): EducationEntry {
 const SKILL_CATEGORY_RE = /^[\p{L}0-9 /&+.-]{2,40}:\s*.+/u;
 
 function buildSkillsText(groups: string[][]): string {
-  const lines = groups.flat();
+  const lines = groups.flat().map(cleanBullet);
   const segments: string[] = [];
   const plain: string[] = [];
   for (const line of lines) {
@@ -491,7 +527,8 @@ const STACK_LINE_RE = /^(stack|tecnologias?|tech stack|ferramentas)\s*:/i;
 function buildProjectDescription(body: string[]): string {
   const prose: string[] = [];
   const stackLines: string[] = [];
-  for (const line of body) {
+  for (const raw of body) {
+    const line = cleanBullet(raw);
     if (STACK_LINE_RE.test(line.trim())) {
       stackLines.push(line.trim());
     } else {
@@ -553,7 +590,9 @@ export function parseResumeText(rawText: string): Partial<ResumeData> {
       continue;
     }
     if (current) {
-      current.lines.push(cleanBullet(line));
+      // Kept raw (marker + all) here — mergeWrappedLines needs the original bullet marker to
+      // tell a new bullet from a wrapped continuation line; cleanBullet runs per-section below.
+      current.lines.push(line);
       continue;
     }
 
@@ -596,7 +635,7 @@ export function parseResumeText(rawText: string): Partial<ResumeData> {
   const educationGroups = sectionGroups("education");
   const skillsGroups = sectionGroups("skills");
 
-  const summaryText = [...preamble, ...summaryGroups.flat()].join(" ");
+  const summaryText = [...preamble, ...summaryGroups.flat().map(cleanBullet)].join(" ");
 
   const data: Partial<ResumeData> = {
     personal: {
@@ -627,7 +666,7 @@ export function parseResumeText(rawText: string): Partial<ResumeData> {
   if (projectGroups.length > 0) {
     data.projects = mergeHeaderGroups(projectGroups).map(({ header, body }) => ({
       id: "",
-      name: header,
+      name: cleanBullet(header),
       link: "",
       description: buildProjectDescription(body),
     }));

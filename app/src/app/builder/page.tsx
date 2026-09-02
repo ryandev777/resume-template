@@ -70,7 +70,8 @@ export default function BuilderPage() {
       const text = await extractPdfText(file);
       const parsed = parseResumeText(text);
       setPdfReview(parsed);
-    } catch {
+    } catch (err) {
+      console.error("PDF import failed:", err);
       alert(
         locale === "pt-br"
           ? "Não foi possível ler esse PDF. Tente um arquivo com texto selecionável (não uma imagem escaneada)."
