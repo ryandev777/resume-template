@@ -17,10 +17,10 @@ export function ScorePanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
           {locale === "pt-br" ? "Checklist do currículo" : "Resume checklist"}
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {locale === "pt-br"
             ? "Regras simples, sem IA, que checam automaticamente conforme você preenche o formulário — sem precisar clicar em nada."
             : "Simple, no-AI rules that check automatically as you fill in the form — nothing to click."}
@@ -28,7 +28,7 @@ export function ScorePanel() {
       </div>
 
       {empty && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
           {locale === "pt-br" ? (
             <>
               Nada preenchido ainda, por isso tudo abaixo está com &quot;–&quot;. Vá para a aba{" "}
@@ -45,13 +45,13 @@ export function ScorePanel() {
         </div>
       )}
 
-      <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div className="text-2xl font-bold text-slate-900">
+      <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           {passedCount}/{checks.length}
         </div>
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
           <div
-            className="h-full rounded-full bg-slate-900 transition-all"
+            className="h-full rounded-full bg-slate-900 transition-all dark:bg-slate-100"
             style={{ width: `${(passedCount / checks.length) * 100}%` }}
           />
         </div>
@@ -61,14 +61,14 @@ export function ScorePanel() {
         {checks.map((check) => (
           <li
             key={check.id}
-            className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3"
+            className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
           >
             <span
               className={
                 "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold " +
                 (check.passed
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-slate-100 text-slate-400")
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                  : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500")
               }
             >
               {check.passed ? "✓" : "–"}
@@ -77,12 +77,14 @@ export function ScorePanel() {
               <p
                 className={
                   "text-sm font-medium " +
-                  (check.passed ? "text-slate-900" : "text-slate-600")
+                  (check.passed
+                    ? "text-slate-900 dark:text-slate-100"
+                    : "text-slate-600 dark:text-slate-400")
                 }
               >
                 {check.label}
               </p>
-              <p className="text-xs text-slate-500">{check.hint}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{check.hint}</p>
             </div>
           </li>
         ))}

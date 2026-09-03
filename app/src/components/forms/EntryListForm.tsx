@@ -46,14 +46,14 @@ export function EntryListForm({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-        <p className="text-sm text-slate-500">{description}</p>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
       </div>
 
       {entries.map((entry, idx) => (
         <Card key={entry.id}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
               {title} #{idx + 1}
             </span>
             <Button variant="danger" onClick={() => remove(entry.id)} type="button">
@@ -102,7 +102,7 @@ export function EntryListForm({
             </div>
           </div>
 
-          <label className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+          <label className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
             <input
               type="checkbox"
               checked={entry.current}
@@ -161,7 +161,7 @@ export function EntryListForm({
 
 function Label({ bullets }: { bullets: string }) {
   return (
-    <label className="mb-1 block text-xs font-medium text-slate-600">
+    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
       {bullets}
     </label>
   );

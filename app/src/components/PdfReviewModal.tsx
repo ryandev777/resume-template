@@ -139,11 +139,11 @@ export function PdfReviewModal({
   if (sections.length === 0) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-          <h2 className="text-base font-semibold text-slate-900">
+        <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-slate-900">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
             {pt ? "Nada reconhecido no PDF" : "Nothing recognized in the PDF"}
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             {pt
               ? "Não conseguimos identificar seções neste arquivo. Tente um PDF com texto selecionável (não uma imagem escaneada) ou preencha manualmente."
               : "We couldn't identify sections in this file. Try a PDF with selectable text (not a scanned image) or fill the form manually."}
@@ -160,12 +160,12 @@ export function PdfReviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 p-5">
-          <h2 className="text-base font-semibold text-slate-900">
+      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl dark:bg-slate-900">
+        <div className="border-b border-slate-200 p-5 dark:border-slate-700">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
             {pt ? "Revise o que foi extraído do PDF" : "Review what was extracted from the PDF"}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {pt
               ? "A leitura é aproximada. Marque só o que quer trazer para o formulário — o que ficar desmarcado não é alterado."
               : "Reading is approximate. Check only what you want to bring into the form — anything unchecked stays untouched."}
@@ -176,7 +176,7 @@ export function PdfReviewModal({
           {sections.map((s) => (
             <label
               key={s.key}
-              className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 p-3 hover:border-slate-300"
+              className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 p-3 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
             >
               <input
                 type="checkbox"
@@ -185,8 +185,8 @@ export function PdfReviewModal({
                 onChange={() => toggle(s.key)}
               />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-900">{s.title}</p>
-                <ul className="mt-1 max-h-24 space-y-0.5 overflow-y-auto text-xs text-slate-600">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{s.title}</p>
+                <ul className="mt-1 max-h-24 space-y-0.5 overflow-y-auto text-xs text-slate-600 dark:text-slate-400">
                   {s.preview.map((line, i) => (
                     <li key={i} className="truncate">
                       {line}
@@ -198,7 +198,7 @@ export function PdfReviewModal({
           ))}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 p-5">
+        <div className="flex justify-end gap-2 border-t border-slate-200 p-5 dark:border-slate-700">
           <Button variant="secondary" type="button" onClick={onCancel}>
             {pt ? "Cancelar" : "Cancel"}
           </Button>

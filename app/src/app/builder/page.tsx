@@ -96,27 +96,27 @@ export default function BuilderPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="print:hidden flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-        <Link href="/" className="text-sm font-semibold text-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <header className="print:hidden flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+        <Link href="/" className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           ← resume-template
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/feed"
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             {locale === "pt-br" ? "Notícias e vagas" : "News and jobs"}
           </Link>
-          <div className="flex overflow-hidden rounded-md border border-slate-300">
+          <div className="flex overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
             <button
               type="button"
               onClick={() => setLocale("pt-br")}
               className={
                 "px-3 py-1.5 text-xs font-medium " +
                 (locale === "pt-br"
-                  ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50")
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                  : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
               }
             >
               PT-BR
@@ -127,8 +127,8 @@ export default function BuilderPage() {
               className={
                 "px-3 py-1.5 text-xs font-medium " +
                 (locale === "en"
-                  ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50")
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                  : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
               }
             >
               EN
@@ -188,8 +188,8 @@ export default function BuilderPage() {
                 className={
                   "rounded-md px-3 py-1.5 text-xs font-medium " +
                   (tab === t.id
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
                 }
               >
                 {t.label}
@@ -204,15 +204,15 @@ export default function BuilderPage() {
 
         <div className="lg:sticky lg:top-6 lg:self-start">
           <div className="mb-2 flex items-center justify-between px-1">
-            <span className="text-xs font-medium text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {locale === "pt-br" ? "Prévia" : "Preview"}
             </span>
             <span
               className={
                 "rounded-full px-2 py-0.5 text-[11px] font-medium " +
                 (pages > 1
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-emerald-100 text-emerald-700")
+                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300")
               }
               title={
                 locale === "pt-br"
@@ -229,7 +229,7 @@ export default function BuilderPage() {
                   : `~${pages} pages — consider trimming content`}
             </span>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-100 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-100 p-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="max-h-[calc(100vh-8rem)] overflow-y-auto rounded shadow">
               <div className="relative">
                 <div ref={previewRef}>
@@ -238,10 +238,10 @@ export default function BuilderPage() {
                 {Array.from({ length: pages - 1 }).map((_, i) => (
                   <div
                     key={i}
-                    className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-red-400"
+                    className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-red-400 dark:border-red-500"
                     style={{ top: (i + 1) * A4_HEIGHT_PX }}
                   >
-                    <span className="absolute right-2 top-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+                    <span className="absolute right-2 top-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/60 dark:text-red-300">
                       {locale === "pt-br" ? `Página ${i + 2}` : `Page ${i + 2}`}
                     </span>
                   </div>

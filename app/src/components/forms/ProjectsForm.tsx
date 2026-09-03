@@ -15,10 +15,10 @@ export function ProjectsForm() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
           {t.sectionTitles.projects}
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {locale === "pt-br"
             ? "Opcional, mas muito valorizado para programadores — mostra código real."
             : "Optional, but highly valued for programmers — shows real code."}
@@ -28,7 +28,7 @@ export function ProjectsForm() {
       {projects.map((entry, idx) => (
         <Card key={entry.id}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
               {t.sectionTitles.projects} #{idx + 1}
             </span>
             <Button variant="danger" type="button" onClick={() => removeProject(entry.id)}>

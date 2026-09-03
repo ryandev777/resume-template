@@ -54,8 +54,8 @@ export function Wizard() {
             className={
               "rounded-full px-3 py-1 text-xs font-medium transition-colors " +
               (idx === step
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
             }
           >
             {idx + 1}. {label}
@@ -65,7 +65,7 @@ export function Wizard() {
 
       <div>{steps[step]}</div>
 
-      <div className="flex justify-between border-t border-slate-200 pt-4">
+      <div className="flex justify-between border-t border-slate-200 pt-4 dark:border-slate-800">
         <Button
           variant="secondary"
           type="button"

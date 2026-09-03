@@ -27,10 +27,10 @@ export function JobMatchPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
           {locale === "pt-br" ? "Comparar com a vaga" : "Match against a job post"}
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {locale === "pt-br"
             ? "Cole a descrição da vaga. Comparamos as palavras mais frequentes nela com o texto do seu currículo — tudo no seu navegador, nada é enviado a servidor algum."
             : "Paste the job description. We compare its most frequent words against your resume text — all in your browser, nothing is sent to any server."}
@@ -38,7 +38,7 @@ export function JobMatchPanel() {
       </div>
 
       {resumeEmpty && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
           {locale === "pt-br" ? (
             <>
               Seu currículo ainda está vazio — preencha a aba{" "}
@@ -67,7 +67,7 @@ export function JobMatchPanel() {
       />
 
       {!jobDescription.trim() && (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-500">
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
           {locale === "pt-br" ? (
             <>
               Ainda não há nada colado aqui. Assim que você colar a vaga, aparece: quantas
@@ -86,8 +86,8 @@ export function JobMatchPanel() {
 
       {results.length > 0 && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-3">
-            <p className="text-sm font-medium text-slate-900">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
               {matched.length}/{results.length}{" "}
               {locale === "pt-br"
                 ? "palavras-chave da vaga aparecem no seu currículo"
@@ -97,14 +97,14 @@ export function JobMatchPanel() {
 
           {missing.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {locale === "pt-br" ? "Faltando (considere incluir)" : "Missing (consider adding)"}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {missing.map((r) => (
                   <span
                     key={r.word}
-                    className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs text-amber-800"
+                    className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300"
                     title={`${r.count}x`}
                   >
                     {r.word}
@@ -116,14 +116,14 @@ export function JobMatchPanel() {
 
           {matched.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {locale === "pt-br" ? "Já presentes" : "Already present"}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {matched.map((r) => (
                   <span
                     key={r.word}
-                    className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800"
+                    className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300"
                     title={`${r.count}x`}
                   >
                     {r.word}
@@ -133,7 +133,7 @@ export function JobMatchPanel() {
             </div>
           )}
 
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             {locale === "pt-br"
               ? "Só inclua palavras que refletem sua experiência real — inserir termos sem ter a habilidade correspondente costuma sair pior em entrevista."
               : "Only add words that reflect your real experience — stuffing keywords you can't back up usually backfires in the interview."}

@@ -13,7 +13,7 @@ export function PersonalForm() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">{t.steps[0]}</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t.steps[0]}</h2>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label={t.labels.fullName}>
@@ -86,7 +86,7 @@ export function SummaryForm() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">{t.steps[1]}</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t.steps[1]}</h2>
       </div>
       <Field label={t.labels.summary}>
         <Textarea

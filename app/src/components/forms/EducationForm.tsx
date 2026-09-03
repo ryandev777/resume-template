@@ -17,12 +17,12 @@ export function EducationForm() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
           {t.sectionTitles.education}
         </h2>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-slate-600">
+      <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
         <input
           type="checkbox"
           checked={studentMode}
@@ -34,7 +34,7 @@ export function EducationForm() {
       {education.map((entry, idx) => (
         <Card key={entry.id}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
               {t.sectionTitles.education} #{idx + 1}
             </span>
             <Button
