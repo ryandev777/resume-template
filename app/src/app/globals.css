@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (toggle + localStorage in ThemeToggle.tsx) instead of Tailwind v4's
+   default prefers-color-scheme-only `dark:` variant — lets a manual choice override the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
 }
 
 @theme inline {
@@ -38,5 +47,9 @@ body {
     left: 0;
     top: 0;
     box-shadow: none !important;
+    /* The resume itself has no dark: classes and must print as a normal white page even
+       when the site is in dark mode on screen — this is a belt-and-suspenders override. */
+    background: #ffffff !important;
+    color: #171717 !important;
   }
 }
