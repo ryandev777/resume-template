@@ -1,6 +1,6 @@
 "use client";
 
-import type { Entry, EducationEntry, ProjectEntry } from "@/lib/types";
+import type { Entry, EducationEntry, ProjectEntry, ResumeData } from "@/lib/types";
 import { content } from "@/lib/content";
 import { useResumeStore } from "@/lib/store";
 
@@ -104,8 +104,17 @@ function ProjectRow({ entry }: { entry: ProjectEntry }) {
   );
 }
 
-export function ResumeDocument({ printable = false }: { printable?: boolean }) {
-  const state = useResumeStore((s) => s);
+export function ResumeDocument({
+  printable = false,
+  data,
+}: {
+  printable?: boolean;
+  /** Renders this data instead of the local store — used by /compartilhar to show a shared
+   * link's resume read-only, without ever writing it into this viewer's own store/localStorage. */
+  data?: ResumeData;
+}) {
+  const store = useResumeStore((s) => s);
+  const state = data ?? store;
   const t = content[state.locale];
 
   const experiences = state.experiences.filter((e) => e.org.trim());

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import { Wizard } from "@/components/Wizard";
 import { TipsPanel } from "@/components/TipsPanel";
@@ -10,6 +11,7 @@ import { JobMatchPanel } from "@/components/JobMatchPanel";
 import { ResumeDocument } from "@/components/preview/ResumeDocument";
 import { PdfReviewModal } from "@/components/PdfReviewModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { ShareModal } from "@/components/ShareModal";
 import { Button } from "@/components/ui";
 import { getResumeData, useResumeStore } from "@/lib/store";
 import { A4_HEIGHT_PX, usePageEstimate } from "@/lib/usePageEstimate";
@@ -27,6 +29,10 @@ export default function BuilderPage() {
   const [importingPdf, setImportingPdf] = useState(false);
   const [pdfReview, setPdfReview] = useState<Partial<ResumeData> | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  // See ScorePanel.tsx / JobMatchPanel.tsx — getResumeData returns a new object every call, so
+  // it needs useShallow or React logs a getSnapshot-consistency warning on every render.
+  const resumeData = useResumeStore(useShallow((s) => getResumeData(s)));
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -168,6 +174,9 @@ export default function BuilderPage() {
           <Button variant="ghost" type="button" onClick={handleExport}>
             {locale === "pt-br" ? "Backup (.json)" : "Backup (.json)"}
           </Button>
+          <Button variant="ghost" type="button" onClick={() => setSharing(true)}>
+            {locale === "pt-br" ? "Compartilhar" : "Share"}
+          </Button>
           <Button variant="ghost" type="button" onClick={() => setConfirmingClear(true)}>
             {locale === "pt-br" ? "Limpar" : "Clear"}
           </Button>
@@ -270,6 +279,10 @@ export default function BuilderPage() {
             );
           }}
         />
+      )}
+
+      {sharing && (
+        <ShareModal data={resumeData} locale={locale} onClose={() => setSharing(false)} />
       )}
 
       {confirmingClear && (
