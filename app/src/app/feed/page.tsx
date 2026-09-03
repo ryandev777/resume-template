@@ -17,15 +17,27 @@ import {
 } from "@/lib/feed";
 import { isResumeEmpty } from "@/lib/score";
 import { getResumeData, useResumeStore } from "@/lib/store";
+import { useApplicationsStore } from "@/lib/applicationsStore";
 import type { Locale } from "@/lib/types";
 
 type Region = "br" | "intl";
 
 /** Green/amber/red bands for the job-match percentage badge and its progress bar. */
 function matchBandClasses(pct: number): { badge: string; bar: string } {
-  if (pct >= 60) return { badge: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" };
-  if (pct >= 30) return { badge: "bg-amber-100 text-amber-800", bar: "bg-amber-500" };
-  return { badge: "bg-red-100 text-red-700", bar: "bg-red-500" };
+  if (pct >= 60)
+    return {
+      badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+      bar: "bg-emerald-500",
+    };
+  if (pct >= 30)
+    return {
+      badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+      bar: "bg-amber-500",
+    };
+  return {
+    badge: "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300",
+    bar: "bg-red-500",
+  };
 }
 
 /** One consistent color + initials per source, used for the card's avatar circle — the
@@ -41,6 +53,13 @@ const SOURCE_AVATARS: Record<string, { bg: string; initials: string }> = {
   "backend-br/vagas": { bg: "bg-orange-600", initials: "BE" },
   "react-brasil/vagas": { bg: "bg-sky-600", initials: "RB" },
   "job-finder": { bg: "bg-rose-600", initials: "JF" },
+  Himalayas: { bg: "bg-lime-600", initials: "HM" },
+  "soujava/vagas-java": { bg: "bg-red-600", initials: "SJ" },
+  "qa-brasil/vagas": { bg: "bg-emerald-600", initials: "QA" },
+  "CangaceirosDevels/vagas_de_emprego": { bg: "bg-violet-600", initials: "CD" },
+  Arbeitnow: { bg: "bg-blue-600", initials: "AN" },
+  "DevOps-Brasil/Vagas": { bg: "bg-cyan-600", initials: "DO" },
+  "vuejs-br/vagas": { bg: "bg-green-600", initials: "VJ" },
 };
 const DEFAULT_SOURCE_AVATAR = { bg: "bg-slate-500", initials: "•" };
 
@@ -80,6 +99,20 @@ function withinDateFilter(item: FeedCardData, dateFilter: DateFilter): boolean {
   return Date.now() - publishedAt <= DATE_FILTER_WINDOW_MS[dateFilter];
 }
 
+/** Case- and accent-insensitive normalization for the keyword/region search — "Sao Paulo"
+ * should match "São Paulo" either way. */
+const DIACRITICS_RE = new RegExp("[\\u0300-\\u036f]", "g");
+
+function normalizeSearchText(text: string): string {
+  return text.normalize("NFD").replace(DIACRITICS_RE, "").toLowerCase();
+}
+
+/** Quick-fill shortcuts for the search box, matched against location (via the same search —
+ * see searchFilteredItems). Not an exhaustive list of Brazilian cities, just common ones a
+ * dev-resume-tool audience would look for; coverage depends entirely on what each source
+ * publishes (most listings are remote-first, few are tied to one specific city).*/
+const REGION_SHORTCUTS = ["Fortaleza/CE", "São Paulo", "Rio de Janeiro", "Remoto Brasil"];
+
 function TypeBadge({ kind, locale }: { kind: "news" | "job"; locale: Locale }) {
   const pt = locale === "pt-br";
   const isNews = kind === "news";
@@ -87,7 +120,9 @@ function TypeBadge({ kind, locale }: { kind: "news" | "job"; locale: Locale }) {
     <span
       className={
         "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold " +
-        (isNews ? "bg-sky-100 text-sky-700" : "bg-emerald-100 text-emerald-700")
+        (isNews
+          ? "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300"
+          : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300")
       }
     >
       <span aria-hidden>{isNews ? "📰" : "💼"}</span>
@@ -107,7 +142,7 @@ const ENTRY_LEVEL_LABELS: Record<EntryLevel, { pt: string; en: string; icon: str
 function EntryLevelBadge({ level, locale }: { level: EntryLevel; locale: Locale }) {
   const { pt, en, icon } = ENTRY_LEVEL_LABELS[level];
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
       <span aria-hidden>{icon}</span>
       {locale === "pt-br" ? pt : en}
     </span>
@@ -120,28 +155,28 @@ function NewsCard({ item, locale }: { item: NewsCardData; locale: Locale }) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+      className="group flex gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
     >
       <SourceAvatar source={item.source} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <TypeBadge kind="news" locale={locale} />
-          <span className="text-[11px] font-semibold text-slate-700">{item.source}</span>
-          {item.author && <span className="text-[11px] text-slate-400">· {item.author}</span>}
-          <span className="text-[11px] text-slate-400">· {relativeTime(item.publishedAt, locale)}</span>
+          <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{item.source}</span>
+          {item.author && <span className="text-[11px] text-slate-400 dark:text-slate-500">· {item.author}</span>}
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">· {relativeTime(item.publishedAt, locale)}</span>
         </div>
-        <h3 className="mt-1.5 break-words text-base font-bold leading-snug text-slate-900 group-hover:text-slate-700">
+        <h3 className="mt-1.5 break-words text-base font-bold leading-snug text-slate-900 group-hover:text-slate-700 dark:text-slate-100 dark:group-hover:text-slate-300">
           {item.title}
         </h3>
         {item.summary && (
-          <p className="mt-1 break-words text-xs leading-relaxed text-slate-600">{item.summary}</p>
+          <p className="mt-1 break-words text-xs leading-relaxed text-slate-600 dark:text-slate-400">{item.summary}</p>
         )}
         {item.tags.length > 0 && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {item.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-medium text-slate-600"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
               >
                 {tag}
               </span>
@@ -165,31 +200,73 @@ function JobCard({
   matchPct: number | undefined;
 }) {
   const pt = locale === "pt-br";
+  const applications = useApplicationsStore((s) => s.applications);
+  const saveJob = useApplicationsStore((s) => s.saveJob);
+  const isSaved = applications.some((a) => a.id === item.id);
+
+  function openJob() {
+    window.open(item.url, "_blank", "noopener,noreferrer");
+  }
+
   return (
-    <a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+    // A <div> that behaves like the card-is-a-link pattern used elsewhere in this feed, not an
+    // <a>, so the "Salvar" button below can be a real nested <button> (an <a> can't legally
+    // contain another interactive element like a <button>).
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={openJob}
+      onKeyDown={(e) => {
+        // Only react to Enter that originated on the card itself — otherwise Enter on a
+        // focused child (like the "Salvar" button below) bubbles up here too, since
+        // stopPropagation() on the button's onClick doesn't stop the keydown from bubbling,
+        // and would open the job in addition to saving it.
+        if (e.key === "Enter" && e.target === e.currentTarget) openJob();
+      }}
+      className="group flex cursor-pointer gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
     >
       <SourceAvatar source={item.source} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <TypeBadge kind="job" locale={locale} />
           {item.entryLevel && <EntryLevelBadge level={item.entryLevel} locale={locale} />}
-          <span className="text-[11px] font-semibold text-slate-700">{item.source}</span>
-          {item.company && <span className="text-[11px] text-slate-400">· {item.company}</span>}
-          <span className="text-[11px] text-slate-400">· {relativeTime(item.publishedAt, locale)}</span>
+          <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{item.source}</span>
+          {item.company && <span className="text-[11px] text-slate-400 dark:text-slate-500">· {item.company}</span>}
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">· {relativeTime(item.publishedAt, locale)}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isSaved) {
+                saveJob({
+                  id: item.id,
+                  title: item.title,
+                  company: item.company,
+                  url: item.url,
+                  source: item.source,
+                });
+              }
+            }}
+            disabled={isSaved}
+            className={
+              "ml-auto shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium " +
+              (isSaved
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300"
+                : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
+            }
+          >
+            {isSaved ? (pt ? "✓ Salvo" : "✓ Saved") : pt ? "Salvar" : "Save"}
+          </button>
         </div>
-        <h3 className="mt-1.5 break-words text-base font-bold leading-snug text-slate-900 group-hover:text-slate-700">
+        <h3 className="mt-1.5 break-words text-base font-bold leading-snug text-slate-900 group-hover:text-slate-700 dark:text-slate-100 dark:group-hover:text-slate-300">
           {item.title}
         </h3>
-        <p className="mt-0.5 text-xs text-slate-500">
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
           {item.location || (locale === "pt-br" ? "Remoto" : "Remote")}
         </p>
 
         {resumeEmpty ? (
-          <p className="mt-1.5 text-[11px] text-slate-400">
+          <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
             {pt
               ? "Preencha seu currículo para ver a compatibilidade"
               : "Fill in your resume to see match compatibility"}
@@ -205,7 +282,7 @@ function JobCard({
               >
                 {pt ? `${matchPct}% compatível` : `${matchPct}% match`}
               </span>
-              <div className="h-1 w-16 shrink-0 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-1 w-16 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   className={"h-full rounded-full " + matchBandClasses(matchPct).bar}
                   style={{ width: `${matchPct}%` }}
@@ -216,14 +293,14 @@ function JobCard({
         )}
 
         {item.summary && (
-          <p className="mt-1 break-words text-xs leading-relaxed text-slate-600">{item.summary}</p>
+          <p className="mt-1 break-words text-xs leading-relaxed text-slate-600 dark:text-slate-400">{item.summary}</p>
         )}
         {item.tags.length > 0 && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {item.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700"
+                className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300"
               >
                 {tag}
               </span>
@@ -231,7 +308,7 @@ function JobCard({
           </div>
         )}
       </div>
-    </a>
+    </div>
   );
 }
 
@@ -248,7 +325,7 @@ function ErrorBanner({
 }) {
   const pt = locale === "pt-br";
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
       <p>
         {pt
           ? `${label}: não foi possível carregar agora (${message}).`
@@ -257,7 +334,7 @@ function ErrorBanner({
       <button
         type="button"
         onClick={onRetry}
-        className="mt-2 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+        className="mt-2 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-200 dark:hover:bg-amber-950/50"
       >
         {pt ? "Tentar de novo" : "Try again"}
       </button>
@@ -338,6 +415,7 @@ export default function FeedPage() {
   const [region, setRegion] = useState<Region>("br");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const applicationsCount = useApplicationsStore((s) => s.applications.length);
 
   const [newsBR, retryNewsBR] = useFeedSource(fetchBrazilNews);
   const [jobsBR, retryJobsBR] = useFeedSource(fetchBrazilJobs);
@@ -410,14 +488,24 @@ export default function FeedPage() {
   const visibleItems = dateFilteredItems.slice(0, visibleCount);
   const hasMore = visibleCount < dateFilteredItems.length;
 
-  // Keyword search over title/summary/tags — scoped to items already revealed by infinite
-  // scroll (no new fetch, no reach into sources/pages outside the active filters).
+  // Keyword search over title/summary/tags/location — scoped to items already revealed by
+  // infinite scroll (no new fetch, no reach into sources/pages outside the active filters).
+  // Location is what powers the region shortcut chips below (e.g. "Fortaleza/CE"): a job's own
+  // title/summary/tags essentially never mention a city, so without location in the haystack
+  // those chips would just silently match nothing.
+  // Matches per-word (AND across words), not as one exact phrase — "Remoto Brasil" needs to
+  // match a job whose location says "Remoto" and whose title/tags mention "Brasil" elsewhere,
+  // since no source writes that exact two-word phrase verbatim. Also just the more expected
+  // behavior for a search box in general (closer to how GitHub/Google search multi-word queries).
   const searchFilteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return visibleItems;
+    const words = normalizeSearchText(searchQuery.trim())
+      .split(/\s+/)
+      .filter(Boolean);
+    if (words.length === 0) return visibleItems;
     return visibleItems.filter((item) => {
-      const haystack = [item.title, item.summary, ...item.tags].join(" ").toLowerCase();
-      return haystack.includes(q);
+      const location = item.kind === "job" ? item.location : "";
+      const haystack = normalizeSearchText([item.title, item.summary, ...item.tags, location].join(" "));
+      return words.every((w) => haystack.includes(w));
     });
   }, [visibleItems, searchQuery]);
 
@@ -452,28 +540,41 @@ export default function FeedPage() {
   }, [isLoading, hasMore]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-        <Link href="/" className="text-sm font-semibold text-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
+        <Link href="/" className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           ← resume-template
         </Link>
-        <Link
-          href="/builder"
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
-        >
-          {pt ? "Meu currículo" : "My resume"}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/feed/candidaturas"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          >
+            {pt ? "Minhas candidaturas" : "My applications"}
+            {applicationsCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {applicationsCount}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/builder"
+            className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+          >
+            {pt ? "Meu currículo" : "My resume"}
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           {pt ? "Notícias e vagas" : "News and jobs"}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {region === "br"
             ? pt
-              ? "Notícias da comunidade dev brasileira (TabNews) e vagas de boards mantidos pela comunidade no GitHub (frontendbr/vagas, backend-br/vagas, react-brasil/vagas) mais oportunidades de estágio/júnior via job-finder, carregadas direto do navegador — sem servidor próprio, sem cadastro. Clique num card para abrir a matéria ou vaga completa na fonte."
-              : "News from the Brazilian dev community (TabNews) and jobs from community-run GitHub boards (frontendbr/vagas, backend-br/vagas, react-brasil/vagas) plus entry-level openings via job-finder, loaded straight from your browser — no backend, no sign-up. Click a card to open the full article or job post at the source."
+              ? "Notícias da comunidade dev brasileira (TabNews) e vagas de vários boards mantidos pela comunidade no GitHub, mais oportunidades de estágio/júnior via job-finder e vagas remotas abertas a candidatos do Brasil via Himalayas, carregadas direto do navegador — sem servidor próprio, sem cadastro. Clique num card para abrir a matéria ou vaga completa na fonte."
+              : "News from the Brazilian dev community (TabNews) and jobs from several community-run GitHub boards, plus entry-level openings via job-finder and Brazil-eligible remote jobs via Himalayas, loaded straight from your browser — no backend, no sign-up. Click a card to open the full article or job post at the source."
             : pt
               ? "Notícias de tecnologia (dev.to, Hacker News) e vagas remotas de desenvolvimento (Remotive, Jobicy), carregadas direto do navegador — sem servidor próprio, sem cadastro. O conteúdo é majoritariamente em inglês, vindo direto das fontes originais. Clique num card para abrir a matéria ou vaga completa na fonte."
               : "Tech news (dev.to, Hacker News) and remote dev jobs (Remotive, Jobicy), loaded straight from your browser — no backend, no sign-up. Click a card to open the full article or job post at the source."}
@@ -489,8 +590,8 @@ export default function FeedPage() {
                 className={
                   "rounded-md px-3 py-1.5 text-xs font-medium " +
                   (region === r
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
                 }
               >
                 {regionLabel(r, pt)}
@@ -500,7 +601,7 @@ export default function FeedPage() {
           {/* Only meaningful when both button groups share a row — on narrow screens they
               wrap onto separate lines already, so the divider would float alone at the end
               of the first line with nothing to divide. */}
-          <div className="hidden h-4 w-px bg-slate-200 sm:block" aria-hidden />
+          <div className="hidden h-4 w-px bg-slate-200 sm:block dark:bg-slate-800" aria-hidden />
           <div className="flex gap-1.5">
             {FILTERS.map((f) => (
               <button
@@ -510,8 +611,8 @@ export default function FeedPage() {
                 className={
                   "rounded-md px-3 py-1.5 text-xs font-medium " +
                   (filter === f
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
                 }
               >
                 {filterLabel(f, pt)}
@@ -530,8 +631,8 @@ export default function FeedPage() {
                 className={
                   "rounded-md px-3 py-1.5 text-xs font-medium " +
                   (dateFilter === d
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
                 }
               >
                 {dateFilterLabel(d, pt)}
@@ -547,12 +648,35 @@ export default function FeedPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               pt
-                ? "Buscar por palavra-chave nos itens já carregados…"
-                : "Search by keyword in the loaded items…"
+                ? "Buscar por palavra-chave ou região nos itens já carregados…"
+                : "Search by keyword or region in the loaded items…"
             }
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-400 dark:focus:ring-slate-400"
           />
         </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {REGION_SHORTCUTS.map((region_) => (
+            <button
+              key={region_}
+              type="button"
+              onClick={() => setSearchQuery((q) => (q === region_ ? "" : region_))}
+              className={
+                "rounded-full border px-2.5 py-1 text-xs font-medium " +
+                (searchQuery === region_
+                  ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                  : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700")
+              }
+            >
+              📍 {region_}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+          {pt
+            ? "Cobertura de vagas presenciais de uma cidade específica depende do que cada fonte publica — sem garantia de volume."
+            : "Coverage of on-site jobs in a specific city depends on what each source publishes — no volume guarantee."}
+        </p>
 
         <div className="mt-5 space-y-4">
           {isLoading && (
@@ -560,7 +684,7 @@ export default function FeedPage() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100"
+                  className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"
                 />
               ))}
             </div>
@@ -588,7 +712,7 @@ export default function FeedPage() {
           )}
 
           {!isLoading && !newsFailed && !jobsFailed && dateFilteredItems.length === 0 && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {pt ? "Nada encontrado no momento." : "Nothing found right now."}
             </p>
           )}
@@ -597,7 +721,7 @@ export default function FeedPage() {
             dateFilteredItems.length > 0 &&
             searchQuery.trim() !== "" &&
             searchFilteredItems.length === 0 && (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {pt
                   ? `Nenhum resultado para "${searchQuery.trim()}" nos itens já carregados. Role mais pra baixo ou ajuste os filtros.`
                   : `No results for "${searchQuery.trim()}" in the items loaded so far. Scroll down or adjust the filters.`}
@@ -622,7 +746,7 @@ export default function FeedPage() {
           {!isLoading && hasMore && (
             <div ref={sentinelRef}>
               {revealingMore && (
-                <div className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
+                <div className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900" />
               )}
             </div>
           )}
