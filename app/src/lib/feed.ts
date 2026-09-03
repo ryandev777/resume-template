@@ -180,6 +180,14 @@ async function fetchHackerNews(): Promise<NewsCardData[]> {
     }));
 }
 
+/**
+ * Two more general-news APIs were checked for the "Internacional" news bucket and dropped:
+ * - Noozra (noozra.com/api): free, no key, real CORS — but its "tech" category is consumer-tech
+ *   (gadgets, robotaxis, soundbar reviews, even a movie review) rather than dev/programming
+ *   news, confirmed by pulling a live sample — a poor fit next to dev.to/Hacker News.
+ * - saurav.tech/NewsAPI (a static newsapi.org mirror): CORS is fine, but every article in its
+ *   "technology" category is dated April 2022 — the mirror stopped updating years ago.
+ */
 export async function fetchTechNews(): Promise<NewsCardData[]> {
   return sortByPublishedDesc(await mergeSources([fetchDevToNews, fetchHackerNews]));
 }
@@ -252,30 +260,107 @@ async function fetchJobicyJobs(): Promise<JobCardData[]> {
   }));
 }
 
+const ARBEITNOW_JOBS_URL = "https://www.arbeitnow.com/api/job-board-api";
+/** Arbeitnow is a DACH-region board (Germany/Austria/Switzerland) — most listings are local
+ * on-site roles there, not Brazil-relevant, so this belongs in the "Internacional" bucket, not
+ * "Brasil" (kept separate from the earlier Fase D note that discarded it for the Brazil bucket
+ * specifically). CORS confirmed live (`Access-Control-Allow-Origin: *`). Only its small `remote`
+ * subset is used here, further filtered client-side to dev-relevant tags/titles since most of
+ * that subset is non-tech (sales, marketing, design...). */
+const ARBEITNOW_DEV_RE =
+  /develop|engineer|software|backend|front[- ]?end|full[- ]?stack|programmer|\bdev\b|devops|data scientist|\bsre\b|systemadministrator|informatik/i;
+
+interface ArbeitnowJob {
+  slug: string;
+  company_name: string;
+  title: string;
+  description: string;
+  remote: boolean;
+  url: string;
+  tags: string[];
+  location: string;
+  /** Unix seconds, like Himalayas' pubDate — not an ISO string. */
+  created_at: number;
+}
+
+async function fetchArbeitnowJobs(): Promise<JobCardData[]> {
+  const res = await fetch(ARBEITNOW_JOBS_URL);
+  if (!res.ok) throw new Error(`Arbeitnow respondeu ${res.status}`);
+  const data = (await res.json()) as { data?: ArbeitnowJob[] };
+  const relevant = (data.data ?? []).filter(
+    (j) =>
+      j.remote &&
+      (ARBEITNOW_DEV_RE.test(j.title) || j.tags.some((t) => ARBEITNOW_DEV_RE.test(t))),
+  );
+  return relevant.map((j) => ({
+    id: `arbeitnow-${j.slug}`,
+    kind: "job" as const,
+    title: j.title,
+    url: j.url,
+    source: "Arbeitnow",
+    company: j.company_name,
+    location: j.location || "",
+    summary: truncate(stripHtml(j.description ?? ""), 220),
+    publishedAt: new Date(j.created_at * 1000).toISOString(),
+    tags: j.tags.slice(0, 4),
+    allTags: j.tags,
+    entryLevel: detectEntryLevel(j.title),
+  }));
+}
+
 export async function fetchRemoteJobs(): Promise<JobCardData[]> {
-  return sortByPublishedDesc(await mergeSources([fetchRemotiveJobs, fetchJobicyJobs]));
+  return sortByPublishedDesc(
+    await mergeSources([fetchRemotiveJobs, fetchJobicyJobs, fetchArbeitnowJobs]),
+  );
 }
 
 /**
  * Brazil-focused sources — validated live before wiring up (all free, no API key):
  * - News: TabNews (tabnews.com.br), a Brazilian dev community (Hacker-News-like). Its public
  *   API sends `Access-Control-Allow-Origin: *`.
- * - Jobs: GitHub Issues on frontendbr/vagas, backend-br/vagas and react-brasil/vagas, three
- *   actively maintained community job boards (issues posted same-day at validation time) where
- *   each opening is a GitHub issue titled "[Location] Role - Company" with real skill labels
- *   attached. Queried through api.github.com, which also sends `Access-Control-Allow-Origin: *`,
- *   no token needed (60 req/hour per visitor's own IP — plenty for one fetch per page load).
- *   Plus job-finder (see fetchBrazilEntryLevelJobs below) specifically for entry-level roles.
- * Other candidates were checked and dropped:
- * - Arbeitnow: Germany/Europe-focused, not Brazil.
+ * - Jobs: GitHub Issues on frontendbr/vagas, backend-br/vagas, react-brasil/vagas,
+ *   soujava/vagas-java, qa-brasil/vagas, DevOps-Brasil/Vagas and vuejs-br/vagas — seven actively
+ *   maintained community job boards (frontendbr/vagas, soujava/vagas-java and DevOps-Brasil/Vagas
+ *   had issues posted the same day at validation time; qa-brasil/vagas and vuejs-br/vagas within
+ *   the last ~2-3 weeks) where each opening is a GitHub issue titled "[Location] Role - Company"
+ *   with real skill labels attached. Queried through api.github.com, which also sends
+ *   `Access-Control-Allow-Origin: *`, no token needed (60 req/hour per visitor's own IP —
+ *   plenty for one fetch per page load).
+ *   Also CangaceirosDevels/vagas_de_emprego (a Ceará dev community board) — added per explicit
+ *   request, but flagged here transparently: its 5 open issues are mostly remote roles (not
+ *   Fortaleza-specific despite the community's origin) and the newest one dates to Feb/2025 —
+ *   technically alive (not archived) but posting activity has clearly slowed to a trickle. Kept
+ *   because a stale-but-real source degrades gracefully (mergeSources just contributes fewer
+ *   items, same as any other quiet source) rather than breaking anything.
+ *   Plus job-finder (see fetchBrazilEntryLevelJobs below) specifically for entry-level roles,
+ *   and Himalayas (see fetchHimalayasJobs below), filtered to jobs open to Brazil-based
+ *   candidates, proxied through /api/himalayas since that one doesn't send CORS headers.
+ * Other candidates were checked and are NOT in this Brazil bucket:
+ * - Arbeitnow: DACH-region (Germany/Austria/Switzerland), not Brazil — used instead in the
+ *   "Internacional" bucket, see fetchArbeitnowJobs below.
  * - remotejobsbr/jobs (a GitHub-issues aggregator): archived since 2018.
  * - alinebastos/vagas-junior-estagio: a curated README list, not individual live postings
  *   (0 open issues) — nothing to poll.
  * - alinebastos/contrate-junior-estagio: issues here are candidates advertising *themselves*
  *   ("[City] Full Name"), the inverse of what this feed needs (job postings, not résumés).
+ * - frontend-ce/vagas: 0 open issues at validation time — empty, nothing to poll.
  */
 const TABNEWS_URL = "https://www.tabnews.com.br/api/v1/contents?strategy=new&page=1&per_page=30";
-const BRAZIL_JOB_BOARDS = ["frontendbr/vagas", "backend-br/vagas", "react-brasil/vagas"];
+/** DevOps-Brasil/Vagas titles are less consistent than the other boards' — some use "[Role tags]
+ * Company - Location" or double brackets ("[City] [Modality] Role - Level") instead of the usual
+ * "[Location] Role - Company", so parseGithubJobTitle occasionally reads a level word (e.g.
+ * "Pleno") as the company there. Not chased further — the title/location still read fine, only
+ * that one field is sometimes off, same class of harmless quirk as other sources' odd titles. */
+const BRAZIL_JOB_BOARDS = [
+  "frontendbr/vagas",
+  "backend-br/vagas",
+  "react-brasil/vagas",
+  "soujava/vagas-java",
+  "qa-brasil/vagas",
+  "CangaceirosDevels/vagas_de_emprego",
+  "DevOps-Brasil/Vagas",
+  "vuejs-br/vagas",
+];
 
 interface TabNewsContent {
   id: string;
@@ -313,9 +398,9 @@ function stripMarkdown(md: string): string {
 }
 
 /** GitHub job-issue titles look like "[Remoto] Backend Developer - Acme", "[Híbrido em São
- * Paulo] Java Backend Sênior" or (react-brasil/vagas' convention) "[Remota] Front-End Sênior na
- * Sylision". Pulls the bracketed location and, when present, the company after the last " - "
- * or " na ". */
+ * Paulo] Java Backend Sênior", "[Remota] Front-End Sênior na Sylision" (react-brasil/vagas) or
+ * "[Remoto] Front-end Vue.js Developer Pleno @ Sylision" (vuejs-br/vagas). Pulls the bracketed
+ * location and, when present, the company after the last " - ", " @ " or " na ". */
 function parseGithubJobTitle(raw: string): { location: string; title: string; company: string } {
   const bracketMatch = raw.match(/^\[([^\]]+)\]\s*/);
   const location = bracketMatch ? bracketMatch[1].trim() : "";
@@ -323,6 +408,10 @@ function parseGithubJobTitle(raw: string): { location: string; title: string; co
   const dashIdx = rest.lastIndexOf(" - ");
   if (dashIdx !== -1) {
     return { location, title: rest.slice(0, dashIdx).trim(), company: rest.slice(dashIdx + 3).trim() };
+  }
+  const atIdx = rest.lastIndexOf(" @ ");
+  if (atIdx !== -1) {
+    return { location, title: rest.slice(0, atIdx).trim(), company: rest.slice(atIdx + 3).trim() };
   }
   const naMatch = rest.match(/\s+na\s+([^-]+)$/i);
   if (naMatch && naMatch.index !== undefined) {
@@ -411,10 +500,54 @@ async function fetchBrazilEntryLevelJobs(): Promise<JobCardData[]> {
     }));
 }
 
+/** Himalayas' `country`/`category` search params turned out to be no-ops server-side (same
+ * `totalCount` and same mix of unrelated categories with or without them — same pattern as
+ * RemoteOK's tags param), so relevance is filtered client-side by `parentCategories` instead. */
+const HIMALAYAS_RELEVANT_CATEGORIES = new Set(["Developer", "Data", "DevOps", "IT"]);
+
+interface HimalayasJob {
+  title: string;
+  excerpt: string;
+  companyName: string;
+  seniority: string[];
+  locationRestrictions: string[];
+  categories: string[];
+  parentCategories: string[];
+  /** Unix seconds, NOT an ISO string like every other source here — confirmed live (e.g.
+   * 1788322259). Converted below before it ever reaches relativeTime()/sort-by-date. */
+  pubDate: number;
+  applicationLink: string;
+  guid: string;
+}
+
+async function fetchHimalayasJobs(): Promise<JobCardData[]> {
+  const res = await fetch("/api/himalayas?country=Brazil&page=1");
+  if (!res.ok) throw new Error(`Himalayas respondeu ${res.status}`);
+  const data = (await res.json()) as { jobs?: HimalayasJob[] };
+  const relevant = (data.jobs ?? []).filter((j) =>
+    j.parentCategories.some((c) => HIMALAYAS_RELEVANT_CATEGORIES.has(c)),
+  );
+  return relevant.map((j) => ({
+    id: `himalayas-${j.guid}`,
+    kind: "job" as const,
+    title: j.title,
+    url: j.applicationLink,
+    source: "Himalayas",
+    company: j.companyName,
+    location: j.locationRestrictions.join(", "),
+    summary: truncate(stripHtml(j.excerpt ?? ""), 220),
+    publishedAt: new Date(j.pubDate * 1000).toISOString(),
+    tags: j.categories.slice(0, 4),
+    allTags: j.categories,
+    entryLevel: j.seniority.includes("Entry-level") ? "junior" : detectEntryLevel(j.title),
+  }));
+}
+
 export async function fetchBrazilJobs(): Promise<JobCardData[]> {
   const items = await mergeSources([
     ...BRAZIL_JOB_BOARDS.map((repo) => () => fetchGithubJobBoard(repo)),
     fetchBrazilEntryLevelJobs,
+    fetchHimalayasJobs,
   ]);
   return sortByPublishedDesc(items);
 }
