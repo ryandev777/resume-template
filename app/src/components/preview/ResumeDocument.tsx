@@ -4,6 +4,41 @@ import type { Entry, EducationEntry, ProjectEntry } from "@/lib/types";
 import { content } from "@/lib/content";
 import { useResumeStore } from "@/lib/store";
 
+/** linkedin/github/website are stored as typed (e.g. "linkedin.com/in/user", no protocol) — add
+ * one if missing so the link actually navigates instead of being treated as a relative path. */
+function ensureProtocol(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+interface ContactItem {
+  text: string;
+  href?: string;
+}
+
+function ContactLine({ parts }: { parts: ContactItem[] }) {
+  return (
+    <p className="mt-0.5 text-[11px] text-slate-700">
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 && "  •  "}
+          {part.href ? (
+            <a
+              href={part.href}
+              target={part.href.startsWith("http") ? "_blank" : undefined}
+              rel={part.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              className="text-slate-700 no-underline hover:underline"
+            >
+              {part.text}
+            </a>
+          ) : (
+            part.text
+          )}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="mb-1 border-b border-slate-800 pb-0.5 text-[13px] font-bold uppercase tracking-wide text-slate-900">
@@ -78,14 +113,24 @@ export function ResumeDocument({ printable = false }: { printable?: boolean }) {
   const education = state.education.filter((e) => e.institution.trim());
   const projects = state.projects.filter((p) => p.name.trim());
 
-  const contactParts = [
-    state.personal.location,
-    state.personal.email,
-    state.personal.phone,
-    state.personal.linkedin,
-    state.personal.github,
-    state.personal.website,
-  ].filter(Boolean);
+  const contactParts: ContactItem[] = [
+    state.personal.location ? { text: state.personal.location } : null,
+    state.personal.email
+      ? { text: state.personal.email, href: `mailto:${state.personal.email}` }
+      : null,
+    state.personal.phone
+      ? { text: state.personal.phone, href: `tel:${state.personal.phone.replace(/[^\d+]/g, "")}` }
+      : null,
+    state.personal.linkedin
+      ? { text: state.personal.linkedin, href: ensureProtocol(state.personal.linkedin) }
+      : null,
+    state.personal.github
+      ? { text: state.personal.github, href: ensureProtocol(state.personal.github) }
+      : null,
+    state.personal.website
+      ? { text: state.personal.website, href: ensureProtocol(state.personal.website) }
+      : null,
+  ].filter((p): p is ContactItem => p !== null);
 
   const educationBlock = education.length > 0 && (
     <section className="mb-3">
@@ -97,9 +142,14 @@ export function ResumeDocument({ printable = false }: { printable?: boolean }) {
   );
 
   return (
+    // Intentionally no dark: classes anywhere in this component — the resume is a page of
+    // paper, not site chrome, and must look the same (white background, dark text) whether the
+    // app is in light or dark mode, both on screen and on the printed/exported PDF. The
+    // print:bg-white/text-slate-900 below plus the #resume-print-area override in globals.css
+    // are belt-and-suspenders against a dark ancestor ever bleeding through at print time.
     <div
       id={printable ? "resume-print-area" : undefined}
-      className="mx-auto w-full max-w-[210mm] bg-white px-10 py-8 text-slate-900 print:w-[210mm] print:px-[15mm] print:py-[15mm] print:shadow-none"
+      className="mx-auto w-full max-w-[210mm] bg-white px-10 py-8 text-slate-900 print:w-[210mm] print:bg-white print:px-[15mm] print:py-[15mm] print:text-slate-900 print:shadow-none"
       style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
     >
       <div className="mb-4 text-center">
@@ -109,9 +159,7 @@ export function ResumeDocument({ printable = false }: { printable?: boolean }) {
         {state.personal.headline && (
           <p className="mt-0.5 text-[12px] text-slate-800">{state.personal.headline}</p>
         )}
-        <p className="mt-0.5 text-[11px] text-slate-700">
-          {contactParts.length > 0 ? contactParts.join("  •  ") : ""}
-        </p>
+        {contactParts.length > 0 && <ContactLine parts={contactParts} />}
       </div>
 
       {state.summary && (
