@@ -46,6 +46,8 @@ export interface SkillsData {
 export interface ResumeData {
   locale: Locale;
   studentMode: boolean;
+  /** Multiplier applied to every font size in the resume preview/PDF (1 = default). */
+  fontScale: number;
   personal: PersonalInfo;
   summary: string;
   experiences: Entry[];
@@ -59,6 +61,7 @@ export interface ResumeData {
 export const RESUME_DATA_KEYS: (keyof ResumeData)[] = [
   "locale",
   "studentMode",
+  "fontScale",
   "personal",
   "summary",
   "experiences",
@@ -68,3 +71,7 @@ export const RESUME_DATA_KEYS: (keyof ResumeData)[] = [
   "skills",
   "jobDescription",
 ];
+
+export const FONT_SCALE_MIN = 0.85;
+export const FONT_SCALE_MAX = 1.3;
+export const FONT_SCALE_STEP = 0.05;

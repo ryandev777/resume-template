@@ -17,7 +17,7 @@ interface ContactItem {
 
 function ContactLine({ parts }: { parts: ContactItem[] }) {
   return (
-    <p className="mt-0.5 text-[11px] text-slate-700">
+    <p className="mt-0.5 text-[length:calc(11px*var(--rf))] text-slate-700">
       {parts.map((part, i) => (
         <span key={i}>
           {i > 0 && "  •  "}
@@ -41,7 +41,7 @@ function ContactLine({ parts }: { parts: ContactItem[] }) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-1 border-b border-slate-800 pb-0.5 text-[13px] font-bold uppercase tracking-wide text-slate-900">
+    <h2 className="mb-1 border-b border-slate-800 pb-0.5 text-[length:calc(13px*var(--rf))] font-bold uppercase tracking-wide text-slate-900">
       {children}
     </h2>
   );
@@ -50,11 +50,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function EntryRow({ entry }: { entry: Entry }) {
   return (
     <div className="mb-2 break-inside-avoid">
-      <div className="flex items-baseline justify-between text-[11.5px]">
+      <div className="flex items-baseline justify-between text-[length:calc(11.5px*var(--rf))]">
         <span className="font-bold text-slate-900">{entry.org}</span>
         <span className="text-slate-700">{entry.location}</span>
       </div>
-      <div className="flex items-baseline justify-between text-[11px] italic text-slate-700">
+      <div className="flex items-baseline justify-between text-[length:calc(11px*var(--rf))] italic text-slate-700">
         <span>{entry.role}</span>
         <span>
           {entry.startDate}
@@ -63,7 +63,7 @@ function EntryRow({ entry }: { entry: Entry }) {
         </span>
       </div>
       {entry.bullets.filter(Boolean).length > 0 && (
-        <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-[11px] text-slate-800">
+        <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-[length:calc(11px*var(--rf))] text-slate-800">
           {entry.bullets.filter(Boolean).map((b, i) => (
             <li key={i}>{b}</li>
           ))}
@@ -76,11 +76,11 @@ function EntryRow({ entry }: { entry: Entry }) {
 function EducationRow({ entry }: { entry: EducationEntry }) {
   return (
     <div className="mb-2 break-inside-avoid">
-      <div className="flex items-baseline justify-between text-[11.5px]">
+      <div className="flex items-baseline justify-between text-[length:calc(11.5px*var(--rf))]">
         <span className="font-bold text-slate-900">{entry.institution}</span>
         <span className="text-slate-700">{entry.location}</span>
       </div>
-      <div className="flex items-baseline justify-between text-[11px] italic text-slate-700">
+      <div className="flex items-baseline justify-between text-[length:calc(11px*var(--rf))] italic text-slate-700">
         <span>{entry.degree}</span>
         <span>
           {entry.startDate}
@@ -94,7 +94,7 @@ function EducationRow({ entry }: { entry: EducationEntry }) {
 
 function ProjectRow({ entry }: { entry: ProjectEntry }) {
   return (
-    <div className="mb-1.5 break-inside-avoid text-[11px] text-slate-800">
+    <div className="mb-1.5 break-inside-avoid text-[length:calc(11px*var(--rf))] text-slate-800">
       <span className="font-bold text-slate-900">{entry.name}</span>
       {entry.link && <span className="text-slate-600"> — {entry.link}</span>}
       {entry.description && (
@@ -159,21 +159,28 @@ export function ResumeDocument({
     <div
       id={printable ? "resume-print-area" : undefined}
       className="mx-auto w-full max-w-[210mm] bg-white px-10 py-8 text-slate-900 print:w-[210mm] print:bg-white print:px-[15mm] print:py-[15mm] print:text-slate-900 print:shadow-none"
-      style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+      style={
+        {
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          "--rf": state.fontScale ?? 1,
+        } as React.CSSProperties
+      }
     >
       <div className="mb-4 text-center">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-[length:calc(24px*var(--rf))] font-bold">
           {state.personal.fullName || (state.locale === "pt-br" ? "Nome Completo" : "Full Name")}
         </h1>
         {state.personal.headline && (
-          <p className="mt-0.5 text-[12px] text-slate-800">{state.personal.headline}</p>
+          <p className="mt-0.5 text-[length:calc(12px*var(--rf))] text-slate-800">
+            {state.personal.headline}
+          </p>
         )}
         {contactParts.length > 0 && <ContactLine parts={contactParts} />}
       </div>
 
       {state.summary && (
         <section className="mb-3">
-          <p className="text-[11.5px] text-slate-800">{state.summary}</p>
+          <p className="text-[length:calc(11.5px*var(--rf))] text-slate-800">{state.summary}</p>
         </section>
       )}
 
@@ -210,7 +217,7 @@ export function ResumeDocument({
         <section className="mb-3">
           <SectionTitle>{t.sectionTitles.skills}</SectionTitle>
           {state.skills.technical && (
-            <p className="text-[11px] text-slate-800">
+            <p className="text-[length:calc(11px*var(--rf))] text-slate-800">
               <span className="font-bold">
                 {state.locale === "pt-br" ? "Técnicas: " : "Technical: "}
               </span>
@@ -218,7 +225,7 @@ export function ResumeDocument({
             </p>
           )}
           {state.skills.languages && (
-            <p className="text-[11px] text-slate-800">
+            <p className="text-[length:calc(11px*var(--rf))] text-slate-800">
               <span className="font-bold">{t.labels.languages}: </span>
               {state.skills.languages}
             </p>

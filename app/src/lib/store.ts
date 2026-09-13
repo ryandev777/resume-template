@@ -2,12 +2,18 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   RESUME_DATA_KEYS,
+  FONT_SCALE_MIN,
+  FONT_SCALE_MAX,
   type Entry,
   type EducationEntry,
   type ProjectEntry,
   type Locale,
   type ResumeData,
 } from "./types";
+
+function clampFontScale(v: number): number {
+  return Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, v));
+}
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -44,6 +50,7 @@ function emptyProject(): ProjectEntry {
 const initialState: ResumeData = {
   locale: "pt-br",
   studentMode: false,
+  fontScale: 1,
   personal: {
     fullName: "",
     headline: "",
@@ -74,6 +81,7 @@ function withIds<T extends { id?: string }>(items: unknown): (T & { id: string }
 interface ResumeStore extends ResumeData {
   setLocale: (l: Locale) => void;
   setStudentMode: (v: boolean) => void;
+  setFontScale: (v: number) => void;
   setPersonal: (p: Partial<ResumeData["personal"]>) => void;
   setSummary: (s: string) => void;
 
@@ -116,6 +124,7 @@ export const useResumeStore = create<ResumeStore>()(
 
       setLocale: (locale) => set({ locale }),
       setStudentMode: (studentMode) => set({ studentMode }),
+      setFontScale: (v) => set({ fontScale: clampFontScale(v) }),
       setPersonal: (patch) =>
         set((state) => ({ personal: { ...state.personal, ...patch } })),
       setSummary: (summary) => set({ summary }),
@@ -180,6 +189,8 @@ export const useResumeStore = create<ResumeStore>()(
         set((state) => ({
           locale: data.locale === "en" ? "en" : data.locale === "pt-br" ? "pt-br" : state.locale,
           studentMode: typeof data.studentMode === "boolean" ? data.studentMode : state.studentMode,
+          fontScale:
+            typeof data.fontScale === "number" ? clampFontScale(data.fontScale) : state.fontScale,
           personal: data.personal ? { ...state.personal, ...data.personal } : state.personal,
           summary: typeof data.summary === "string" ? data.summary : state.summary,
           experiences: data.experiences ? withIds<Entry>(data.experiences) : state.experiences,

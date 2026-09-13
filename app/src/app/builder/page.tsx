@@ -16,13 +16,15 @@ import { Button } from "@/components/ui";
 import { getResumeData, useResumeStore } from "@/lib/store";
 import { A4_HEIGHT_PX, usePageEstimate } from "@/lib/usePageEstimate";
 import { extractPdfText, parseResumeText } from "@/lib/pdfImport";
-import type { ResumeData } from "@/lib/types";
+import { FONT_SCALE_MAX, FONT_SCALE_MIN, FONT_SCALE_STEP, type ResumeData } from "@/lib/types";
 
 type Tab = "form" | "checklist" | "job" | "tips";
 
 export default function BuilderPage() {
   const locale = useResumeStore((s) => s.locale);
   const setLocale = useResumeStore((s) => s.setLocale);
+  const fontScale = useResumeStore((s) => s.fontScale);
+  const setFontScale = useResumeStore((s) => s.setFontScale);
   const reset = useResumeStore((s) => s.reset);
   const loadData = useResumeStore((s) => s.loadData);
   const [tab, setTab] = useState<Tab>("form");
@@ -212,10 +214,45 @@ export default function BuilderPage() {
         </div>
 
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="mb-2 flex items-center justify-between px-1">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {locale === "pt-br" ? "Prévia" : "Preview"}
             </span>
+            <div className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-1 py-0.5 dark:border-slate-600 dark:bg-slate-800">
+              <button
+                type="button"
+                onClick={() => setFontScale(Math.round((fontScale - FONT_SCALE_STEP) * 100) / 100)}
+                disabled={fontScale <= FONT_SCALE_MIN}
+                aria-label={locale === "pt-br" ? "Diminuir fonte" : "Decrease font size"}
+                className="rounded px-1.5 py-0.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                A-
+              </button>
+              <span
+                className="w-10 text-center text-[11px] tabular-nums text-slate-500 dark:text-slate-400"
+                title={locale === "pt-br" ? "Tamanho da fonte" : "Font size"}
+              >
+                {Math.round(fontScale * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setFontScale(Math.round((fontScale + FONT_SCALE_STEP) * 100) / 100)}
+                disabled={fontScale >= FONT_SCALE_MAX}
+                aria-label={locale === "pt-br" ? "Aumentar fonte" : "Increase font size"}
+                className="rounded px-1.5 py-0.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                A+
+              </button>
+              {fontScale !== 1 && (
+                <button
+                  type="button"
+                  onClick={() => setFontScale(1)}
+                  className="ml-0.5 rounded px-1.5 py-0.5 text-[11px] text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                >
+                  {locale === "pt-br" ? "Redefinir" : "Reset"}
+                </button>
+              )}
+            </div>
             <span
               className={
                 "rounded-full px-2 py-0.5 text-[11px] font-medium " +

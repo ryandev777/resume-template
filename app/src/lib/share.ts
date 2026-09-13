@@ -1,4 +1,12 @@
-import type { Entry, EducationEntry, ProjectEntry, PersonalInfo, ResumeData } from "./types";
+import {
+  FONT_SCALE_MIN,
+  FONT_SCALE_MAX,
+  type Entry,
+  type EducationEntry,
+  type ProjectEntry,
+  type PersonalInfo,
+  type ResumeData,
+} from "./types";
 
 /** Encoded fragments longer than this get rejected before a link is ever shown — comfortably
  * below the ~64k+ limits most browsers/address bars tolerate, but a resume this size is almost
@@ -113,6 +121,12 @@ function bool(v: unknown): boolean {
   return typeof v === "boolean" ? v : false;
 }
 
+function fontScale(v: unknown): number {
+  return typeof v === "number" && Number.isFinite(v)
+    ? Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, v))
+    : 1;
+}
+
 function syntheticId(raw: unknown, prefix: string, i: number): string {
   return typeof raw === "string" && raw ? raw : `${prefix}-${i}`;
 }
@@ -171,6 +185,7 @@ export function hydrateSharedResume(partial: Partial<ResumeData>): ResumeData {
   return {
     locale: partial.locale === "en" ? "en" : "pt-br",
     studentMode: bool(partial.studentMode),
+    fontScale: fontScale(partial.fontScale),
     personal: {
       fullName: str(p.fullName),
       headline: str(p.headline),
