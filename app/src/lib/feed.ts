@@ -20,6 +20,7 @@
  */
 
 import { matchKeywords } from "./keywords";
+import { ATS_COMPANIES } from "./atsCompanies";
 import type { Locale, ResumeData } from "./types";
 
 export interface NewsCardData {
@@ -95,7 +96,7 @@ function truncate(text: string, max: number): string {
  * and flattens whatever succeeds — one source failing doesn't take the others down with it.
  * Only throws when every single one fails, so the section-level error banner has something
  * concrete to report. */
-async function mergeSources<T>(fetchers: (() => Promise<T[]>)[]): Promise<T[]> {
+export async function mergeSources<T>(fetchers: (() => Promise<T[]>)[]): Promise<T[]> {
   const results = await Promise.allSettled(fetchers.map((f) => f()));
   const items = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
   if (items.length === 0) {
@@ -310,7 +311,7 @@ async function fetchArbeitnowJobs(): Promise<JobCardData[]> {
 
 export async function fetchRemoteJobs(): Promise<JobCardData[]> {
   return sortByPublishedDesc(
-    await mergeSources([fetchRemotiveJobs, fetchJobicyJobs, fetchArbeitnowJobs]),
+    await mergeSources([fetchRemotiveJobs, fetchJobicyJobs, fetchArbeitnowJobs, fetchAtsRemoteJobs]),
   );
 }
 
@@ -543,11 +544,161 @@ async function fetchHimalayasJobs(): Promise<JobCardData[]> {
   }));
 }
 
+/**
+ * Fase P': Greenhouse and Lever ATS boards (see atsCompanies.ts for the slug list and how each
+ * was validated). Neither platform's job object carries a "this is remote / this is Brazil"
+ * flag, only free-text location, so classifyAtsLocation reads that text — matching a Brazilian
+ * country/city name routes the job to the Brasil bucket, matching a remote/global term (and,
+ * for Lever, also requiring workplaceType === "remote") routes it to the Internacional bucket,
+ * and anything else (e.g. a Greenhouse company's Mexico City or Lever company's "US-Based only"
+ * postings) is dropped rather than misfiled into either bucket.
+ *
+ * A company-wide ATS board is not a dev-jobs board — Stone's, for instance, lists 430 openings
+ * but only ~17 are engineering/data/product roles, the rest sales/field-agent postings (same
+ * problem the RemoteOK source note above describes, at a larger scale since ATS boards cover a
+ * whole company, not just tech). ATS_DEV_RELEVANT_RE filters every title before it's kept, same
+ * spirit as ARBEITNOW_DEV_RE above but extended with the PT-BR terms these boards actually use.
+ */
+const ATS_BRAZIL_LOCATION_RE =
+  /brasil|brazil|s[aã]o paulo|rio de janeiro|curitiba|belo horizonte|porto alegre|recife|fortaleza|salvador|bras[ií]lia|campinas|florian[oó]polis|santos|goi[aâ]nia/i;
+const ATS_REMOTE_LOCATION_RE = /\b(remote|remoto|remota|anywhere|worldwide|global|latam|latin america)\b/i;
+const ATS_DEV_RELEVANT_RE =
+  /develop|engineer|software|backend|front[- ]?end|full[- ]?stack|programmer|programador|desenvolved|desenvolvimento|\bdev\b|devops|data (scientist|engineer|analyst)|dados|machine learning|\bml\b|\bai\b|\bsre\b|site reliability|tech lead|arquitet|infraestrutura|\bqa\b|quality assurance|product manager|\bux\b|\bui\b|scrum|analista de sistemas|cloud|kubernetes|security engineer|seguran[cç]a da informa[cç][aã]o/i;
+
+function classifyAtsLocation(text: string): "brazil" | "remote" | null {
+  if (ATS_BRAZIL_LOCATION_RE.test(text)) return "brazil";
+  if (ATS_REMOTE_LOCATION_RE.test(text)) return "remote";
+  return null;
+}
+
+interface AtsJobBuckets {
+  brazil: JobCardData[];
+  remote: JobCardData[];
+}
+
+function emptyAtsBuckets(): AtsJobBuckets {
+  return { brazil: [], remote: [] };
+}
+
+interface GreenhouseJob {
+  id: number;
+  absolute_url: string;
+  location: { name: string } | null;
+  updated_at: string;
+  title: string;
+  company_name: string;
+}
+
+async function fetchGreenhouseCompanyJobs(slug: string): Promise<AtsJobBuckets> {
+  const res = await fetch(`https://boards-api.greenhouse.io/v1/boards/${slug}/jobs`);
+  if (!res.ok) throw new Error(`Greenhouse (${slug}) respondeu ${res.status}`);
+  const data = (await res.json()) as { jobs?: GreenhouseJob[] };
+  const buckets = emptyAtsBuckets();
+  for (const j of data.jobs ?? []) {
+    if (!ATS_DEV_RELEVANT_RE.test(j.title)) continue;
+    const locationText = j.location?.name ?? "";
+    const region = classifyAtsLocation(locationText);
+    if (!region) continue;
+    buckets[region].push({
+      id: `gh-ats-${slug}-${j.id}`,
+      kind: "job",
+      title: j.title,
+      url: j.absolute_url,
+      source: j.company_name || slug,
+      company: j.company_name || slug,
+      location: locationText,
+      summary: "",
+      publishedAt: j.updated_at,
+      tags: [],
+      allTags: [],
+      entryLevel: detectEntryLevel(j.title),
+    });
+  }
+  return buckets;
+}
+
+interface LeverJob {
+  id: string;
+  text: string;
+  hostedUrl: string;
+  createdAt: number;
+  descriptionPlain?: string;
+  workplaceType?: string;
+  categories: {
+    location?: string;
+    allLocations?: string[];
+    team?: string;
+    department?: string;
+  };
+}
+
+/** Lever, unlike Greenhouse, mixes on-site and remote roles with no company-level filter, so
+ * this only keeps `workplaceType === "remote"` postings before even checking location text —
+ * an on-site "London" listing shouldn't reach a Brazil-or-remote feed just because some other
+ * field happens to match. */
+async function fetchLeverCompanyJobs(slug: string, companyName: string): Promise<AtsJobBuckets> {
+  const res = await fetch(`https://api.lever.co/v0/postings/${slug}?mode=json`);
+  if (!res.ok) throw new Error(`Lever (${slug}) respondeu ${res.status}`);
+  const data = (await res.json()) as LeverJob[];
+  const buckets = emptyAtsBuckets();
+  for (const j of data) {
+    if (j.workplaceType !== "remote") continue;
+    if (!ATS_DEV_RELEVANT_RE.test(j.text)) continue;
+    const locationText = [j.categories.location, ...(j.categories.allLocations ?? [])]
+      .filter(Boolean)
+      .join(" ");
+    const region = classifyAtsLocation(locationText);
+    if (!region) continue;
+    const tags = [j.categories.team, j.categories.department].filter((t): t is string => Boolean(t));
+    buckets[region].push({
+      id: `lever-ats-${slug}-${j.id}`,
+      kind: "job",
+      title: j.text,
+      url: j.hostedUrl,
+      source: companyName,
+      company: companyName,
+      location: j.categories.location || locationText || "Remoto",
+      summary: truncate(j.descriptionPlain ?? "", 220),
+      publishedAt: new Date(j.createdAt).toISOString(),
+      tags: tags.slice(0, 4),
+      allTags: tags,
+      entryLevel: detectEntryLevel(j.text),
+    });
+  }
+  return buckets;
+}
+
+async function fetchAtsJobs(): Promise<AtsJobBuckets> {
+  const results = await Promise.allSettled(
+    ATS_COMPANIES.map((c) =>
+      c.platform === "greenhouse"
+        ? fetchGreenhouseCompanyJobs(c.slug)
+        : fetchLeverCompanyJobs(c.slug, c.name ?? c.slug),
+    ),
+  );
+  const merged = emptyAtsBuckets();
+  for (const r of results) {
+    if (r.status !== "fulfilled") continue;
+    merged.brazil.push(...r.value.brazil);
+    merged.remote.push(...r.value.remote);
+  }
+  return merged;
+}
+
+async function fetchAtsBrazilJobs(): Promise<JobCardData[]> {
+  return (await fetchAtsJobs()).brazil;
+}
+
+async function fetchAtsRemoteJobs(): Promise<JobCardData[]> {
+  return (await fetchAtsJobs()).remote;
+}
+
 export async function fetchBrazilJobs(): Promise<JobCardData[]> {
   const items = await mergeSources([
     ...BRAZIL_JOB_BOARDS.map((repo) => () => fetchGithubJobBoard(repo)),
     fetchBrazilEntryLevelJobs,
     fetchHimalayasJobs,
+    fetchAtsBrazilJobs,
   ]);
   return sortByPublishedDesc(items);
 }
