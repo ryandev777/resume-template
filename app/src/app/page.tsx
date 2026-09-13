@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRef } from "react";
+import { motion, MotionConfig, useScroll, useTransform, type Variants } from "motion/react";
 
 const evidence = [
   {
@@ -45,69 +49,166 @@ const evidence = [
   },
 ];
 
-export default function Home() {
+const heroContainer: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+};
+
+const heroItem: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+};
+
+const cardGrid: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+
+const cardItem: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+};
+
+/** Two soft, blurred gradient blobs drifting at different speeds as the hero scrolls past —
+ * pure decoration, `aria-hidden` and `pointer-events-none` so they never interfere with content
+ * or screen readers. Depth comes from each blob's y-transform moving at a different fraction of
+ * scroll progress (classic parallax: farther/slower vs. nearer/faster). */
+function HeroParallaxBackground({ progress }: { progress: ReturnType<typeof useScroll>["scrollYProgress"] }) {
+  const ySlow = useTransform(progress, [0, 1], [0, 120]);
+  const yFast = useTransform(progress, [0, 1], [0, 260]);
+
   return (
-    <main className="flex-1 bg-slate-50 dark:bg-slate-950">
-      <section className="flex flex-col items-center px-6 py-20 text-center">
-        <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-          Feito para devs brasileiros
-        </p>
-        <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl">
-          Monte um currículo com mais chances de passar
-        </h1>
-        <p className="mt-4 max-w-xl text-lg text-slate-600 dark:text-slate-400">
-          Preencha um formulário guiado com dicas do que recrutadores e sistemas
-          ATS realmente procuram, veja o resultado em tempo real e exporte em
-          PDF — em português ou inglês.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/builder"
-            className="rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+      <motion.div
+        style={{ y: ySlow }}
+        className="absolute -left-32 -top-24 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/10"
+      />
+      <motion.div
+        style={{ y: yFast }}
+        className="absolute -right-24 top-10 h-96 w-96 rounded-full bg-violet-300/30 blur-3xl dark:bg-violet-500/10"
+      />
+    </div>
+  );
+}
+
+export default function Home() {
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <main className="flex-1 bg-slate-50 dark:bg-slate-950">
+      <section
+        ref={heroRef}
+        className="relative flex flex-col items-center overflow-hidden px-6 py-20 text-center"
+      >
+        <HeroParallaxBackground progress={scrollYProgress} />
+
+        <motion.div
+          variants={heroContainer}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col items-center"
+        >
+          <motion.p
+            variants={heroItem}
+            className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400"
           >
-            Criar meu currículo
-          </Link>
-          <Link
-            href="/feed"
-            className="rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            Feito para devs brasileiros
+          </motion.p>
+          <motion.h1
+            variants={heroItem}
+            className="max-w-2xl text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl"
           >
-            Ver notícias e vagas
-          </Link>
-        </div>
-        <ul className="mt-12 grid max-w-2xl grid-cols-1 gap-3 text-left text-sm text-slate-600 dark:text-slate-400 sm:grid-cols-3">
-          <li className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <strong className="block text-slate-900 dark:text-slate-100">Sem cadastro</strong>
-            Seus dados ficam só no seu navegador.
-          </li>
-          <li className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <strong className="block text-slate-900 dark:text-slate-100">PT-BR e EN</strong>
-            Um clique para trocar de idioma e mercado.
-          </li>
-          <li className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <strong className="block text-slate-900 dark:text-slate-100">Dicas embutidas</strong>
-            Método STAR, verbos de ação e boas práticas de ATS.
-          </li>
-        </ul>
+            Monte um currículo com mais chances de passar
+          </motion.h1>
+          <motion.p
+            variants={heroItem}
+            className="mt-4 max-w-xl text-lg text-slate-600 dark:text-slate-400"
+          >
+            Preencha um formulário guiado com dicas do que recrutadores e sistemas
+            ATS realmente procuram, veja o resultado em tempo real e exporte em
+            PDF — em português ou inglês.
+          </motion.p>
+          <motion.div
+            variants={heroItem}
+            className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          >
+            <Link href="/builder">
+              <motion.span
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-block rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              >
+                Criar meu currículo
+              </motion.span>
+            </Link>
+            <Link href="/feed">
+              <motion.span
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-block rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Ver notícias e vagas
+              </motion.span>
+            </Link>
+          </motion.div>
+          <motion.ul
+            variants={heroItem}
+            className="mt-12 grid max-w-2xl grid-cols-1 gap-3 text-left text-sm text-slate-600 dark:text-slate-400 sm:grid-cols-3"
+          >
+            <li className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <strong className="block text-slate-900 dark:text-slate-100">Sem cadastro</strong>
+              Seus dados ficam só no seu navegador.
+            </li>
+            <li className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <strong className="block text-slate-900 dark:text-slate-100">PT-BR e EN</strong>
+              Um clique para trocar de idioma e mercado.
+            </li>
+            <li className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <strong className="block text-slate-900 dark:text-slate-100">Dicas embutidas</strong>
+              Método STAR, verbos de ação e boas práticas de ATS.
+            </li>
+          </motion.ul>
+        </motion.div>
       </section>
 
       <section className="border-t border-slate-200 bg-white px-6 py-16 dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto max-w-5xl">
-          <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">
-            Baseado em fatos, não em achismo
-          </p>
-          <h2 className="mt-1 text-center text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">
-            Por que o modelo é montado desse jeito
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-600 dark:text-slate-400">
-            Cada escolha de formato e dica deste gerador vem de guias de
-            carreira de universidades, times de recrutamento e do ATS mais
-            usado no Brasil — não de opinião.
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+              Baseado em fatos, não em achismo
+            </p>
+            <h2 className="mt-1 text-center text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Por que o modelo é montado desse jeito
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-600 dark:text-slate-400">
+              Cada escolha de formato e dica deste gerador vem de guias de
+              carreira de universidades, times de recrutamento e do ATS mais
+              usado no Brasil — não de opinião.
+            </p>
+          </motion.div>
 
-          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <motion.div
+            variants={cardGrid}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
             {evidence.map((item) => (
-              <a
+              <motion.a
                 key={item.title}
+                variants={cardItem}
+                whileHover={{ y: -4 }}
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -125,9 +226,9 @@ export default function Home() {
                 <span className="mt-3 text-xs font-medium text-slate-500 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-slate-100">
                   Fonte: {item.source} ↗
                 </span>
-              </a>
+              </motion.a>
             ))}
-          </div>
+          </motion.div>
 
           <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-slate-400 dark:text-slate-500">
             Estimativas sobre uso de ATS (ex.: percentual de currículos
@@ -137,6 +238,7 @@ export default function Home() {
           </p>
         </div>
       </section>
-    </main>
+      </main>
+    </MotionConfig>
   );
 }
