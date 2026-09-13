@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
+import { GithubImportModal } from "@/components/GithubImportModal";
 import { content } from "@/lib/content";
 import { useResumeStore } from "@/lib/store";
 
@@ -10,6 +12,8 @@ export function ProjectsForm() {
   const addProject = useResumeStore((s) => s.addProject);
   const updateProject = useResumeStore((s) => s.updateProject);
   const removeProject = useResumeStore((s) => s.removeProject);
+  const importProjects = useResumeStore((s) => s.importProjects);
+  const [importingFromGithub, setImportingFromGithub] = useState(false);
   const t = content[locale];
 
   return (
@@ -66,9 +70,23 @@ export function ProjectsForm() {
         </Card>
       ))}
 
-      <Button variant="secondary" type="button" onClick={() => addProject()}>
-        + {t.sectionTitles.projects}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" type="button" onClick={() => addProject()}>
+          + {t.sectionTitles.projects}
+        </Button>
+        <Button variant="secondary" type="button" onClick={() => setImportingFromGithub(true)}>
+          {locale === "pt-br" ? "Importar do GitHub" : "Import from GitHub"}
+        </Button>
+      </div>
+
+      {importingFromGithub && (
+        <GithubImportModal
+          locale={locale}
+          existingLinks={projects.map((p) => p.link)}
+          onClose={() => setImportingFromGithub(false)}
+          onImport={importProjects}
+        />
+      )}
     </div>
   );
 }

@@ -100,6 +100,9 @@ interface ResumeStore extends ResumeData {
   addProject: () => void;
   updateProject: (id: string, patch: Partial<ProjectEntry>) => void;
   removeProject: (id: string) => void;
+  /** Appends one or more projects at once (e.g. from the GitHub import modal), each getting a
+   * fresh id — additive, existing projects are left untouched. */
+  importProjects: (entries: Omit<ProjectEntry, "id">[]) => void;
 
   setSkills: (patch: Partial<ResumeData["skills"]>) => void;
   setJobDescription: (v: string) => void;
@@ -179,6 +182,10 @@ export const useResumeStore = create<ResumeStore>()(
       removeProject: (id) =>
         set((state) => ({
           projects: state.projects.filter((e) => e.id !== id),
+        })),
+      importProjects: (entries) =>
+        set((state) => ({
+          projects: [...state.projects, ...entries.map((e) => ({ ...e, id: uid() }))],
         })),
 
       setSkills: (patch) =>
