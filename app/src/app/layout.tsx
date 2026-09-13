@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { StorageBackupBoot } from "@/components/StorageBackupBoot";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
@@ -33,6 +34,15 @@ export const metadata: Metadata = {
   title: "Gerador de Currículo | resume-template",
   description:
     "Monte um currículo com mais chances de passar em vagas de programação no Brasil ou no exterior.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    title: "Currículo",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -50,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         {children}
         <StorageBackupBoot />
+        <ServiceWorkerRegister />
         <ThemeToggle />
         <Toaster position="bottom-right" richColors closeButton />
       </body>
