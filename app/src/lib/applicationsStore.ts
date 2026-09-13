@@ -21,6 +21,10 @@ export interface SavedApplication {
   source: string;
   savedAt: string;
   status: ApplicationStatus;
+  /** The job card's own summary text, if the source provided one — carried along so "Comparar
+   * com currículo" can send it straight into the builder's job-match textarea without the user
+   * having to go re-copy the posting themselves. */
+  description?: string;
 }
 
 interface ApplicationsStore {

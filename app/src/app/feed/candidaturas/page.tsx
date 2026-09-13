@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DragDropContext,
   Draggable,
@@ -53,7 +54,14 @@ function ApplicationCard({
   pt: boolean;
 }) {
   const removeApplication = useApplicationsStore((s) => s.removeApplication);
+  const setJobDescription = useResumeStore((s) => s.setJobDescription);
+  const router = useRouter();
   const locale = pt ? "pt-br" : "en";
+
+  function compareWithResume() {
+    setJobDescription(app.description ?? "");
+    router.push("/builder?tab=job");
+  }
 
   return (
     <Draggable draggableId={app.id} index={index}>
@@ -95,9 +103,69 @@ function ApplicationCard({
           <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
             {pt ? "Salvo" : "Saved"} {relativeTime(app.savedAt, locale)}
           </p>
+          <button
+            type="button"
+            onClick={compareWithResume}
+            className="mt-2 w-full rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+          >
+            {pt ? "Comparar com currículo" : "Compare with resume"}
+          </button>
         </div>
       )}
     </Draggable>
+  );
+}
+
+/** Simple funnel counts from the tracker's own data — no extra timestamps are kept per status
+ * change, so this reports counts/rates as of right now rather than time-to-interview or similar
+ * (that would need a status-change history this app doesn't record). "Response rate" counts
+ * anything that moved past "applied" (interview, rejected or offer) over everything that reached
+ * "applied" or further — "saved" jobs aren't applications yet, so they're excluded from the rate. */
+function ApplicationsStats({ applications, pt }: { applications: SavedApplication[]; pt: boolean }) {
+  if (applications.length === 0) return null;
+
+  const counts: Record<ApplicationStatus, number> = {
+    saved: 0,
+    applied: 0,
+    interview: 0,
+    rejected: 0,
+    offer: 0,
+  };
+  for (const a of applications) counts[a.status]++;
+
+  const appliedOrBeyond = counts.applied + counts.interview + counts.rejected + counts.offer;
+  const responded = counts.interview + counts.rejected + counts.offer;
+  const responseRate = appliedOrBeyond > 0 ? Math.round((responded / appliedOrBeyond) * 100) : null;
+
+  return (
+    <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{applications.length}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {pt ? "vagas salvas" : "jobs saved"}
+        </p>
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{appliedOrBeyond}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {pt ? "candidaturas enviadas" : "applications sent"}
+        </p>
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          {responseRate === null ? "—" : `${responseRate}%`}
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {pt ? "taxa de resposta" : "response rate"}
+        </p>
+      </div>
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800/60 dark:bg-emerald-950/30">
+        <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{counts.offer}</p>
+        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+          {pt ? "ofertas" : "offers"}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -139,6 +207,8 @@ export default function ApplicationsPage() {
             ? "Vagas que você salvou no feed, guardadas só no seu navegador (localStorage) — nada é enviado a servidor algum. Arraste um card entre colunas pra mudar o status."
             : "Jobs you saved from the feed, kept only in your browser (localStorage) — nothing is sent to any server. Drag a card between columns to change its status."}
         </p>
+
+        <ApplicationsStats applications={applications} pt={pt} />
 
         {applications.length === 0 ? (
           <div className="mt-8 rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900">

@@ -244,6 +244,7 @@ function JobCard({
                   company: item.company,
                   url: item.url,
                   source: item.source,
+                  description: item.summary || undefined,
                 });
               }
             }}

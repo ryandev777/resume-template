@@ -1,37 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import { Wizard } from "@/components/Wizard";
 import { TipsPanel } from "@/components/TipsPanel";
 import { ScorePanel } from "@/components/ScorePanel";
 import { JobMatchPanel } from "@/components/JobMatchPanel";
+import { CoverLetterPanel } from "@/components/CoverLetterPanel";
 import { ResumeDocument } from "@/components/preview/ResumeDocument";
 import { PdfReviewModal } from "@/components/PdfReviewModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ShareModal } from "@/components/ShareModal";
+import { ProfilesModal } from "@/components/ProfilesModal";
 import { Button } from "@/components/ui";
 import { getResumeData, useResumeStore } from "@/lib/store";
+import { resumeToPlainText } from "@/lib/exportText";
 import { A4_HEIGHT_PX, usePageEstimate } from "@/lib/usePageEstimate";
 import { extractPdfText, parseResumeText } from "@/lib/pdfImport";
 import { FONT_SCALE_MAX, FONT_SCALE_MIN, FONT_SCALE_STEP, type ResumeData } from "@/lib/types";
 
-type Tab = "form" | "checklist" | "job" | "tips";
+type Tab = "form" | "checklist" | "job" | "letter" | "tips";
+const VALID_TABS: Tab[] = ["form", "checklist", "job", "letter", "tips"];
 
-export default function BuilderPage() {
+function BuilderPageContent() {
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const initialTab: Tab =
+    requestedTab && (VALID_TABS as string[]).includes(requestedTab) ? (requestedTab as Tab) : "form";
+
   const locale = useResumeStore((s) => s.locale);
   const setLocale = useResumeStore((s) => s.setLocale);
   const fontScale = useResumeStore((s) => s.fontScale);
   const setFontScale = useResumeStore((s) => s.setFontScale);
   const reset = useResumeStore((s) => s.reset);
   const loadData = useResumeStore((s) => s.loadData);
-  const [tab, setTab] = useState<Tab>("form");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [importingPdf, setImportingPdf] = useState(false);
   const [pdfReview, setPdfReview] = useState<Partial<ResumeData> | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [managingProfiles, setManagingProfiles] = useState(false);
   // See ScorePanel.tsx / JobMatchPanel.tsx — getResumeData returns a new object every call, so
   // it needs useShallow or React logs a getSnapshot-consistency warning on every render.
   const resumeData = useResumeStore(useShallow((s) => getResumeData(s)));
@@ -49,6 +60,17 @@ export default function BuilderPage() {
     const a = document.createElement("a");
     a.href = url;
     a.download = "curriculo-backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportText() {
+    const data = getResumeData(useResumeStore.getState());
+    const blob = new Blob([resumeToPlainText(data)], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "curriculo.txt";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -100,6 +122,7 @@ export default function BuilderPage() {
     { id: "form", label: locale === "pt-br" ? "Formulário" : "Form" },
     { id: "checklist", label: locale === "pt-br" ? "Checklist" : "Checklist" },
     { id: "job", label: locale === "pt-br" ? "Vaga" : "Job match" },
+    { id: "letter", label: locale === "pt-br" ? "Carta" : "Cover letter" },
     { id: "tips", label: locale === "pt-br" ? "Dicas" : "Tips" },
   ];
 
@@ -176,6 +199,12 @@ export default function BuilderPage() {
           <Button variant="ghost" type="button" onClick={handleExport}>
             {locale === "pt-br" ? "Backup (.json)" : "Backup (.json)"}
           </Button>
+          <Button variant="ghost" type="button" onClick={handleExportText}>
+            {locale === "pt-br" ? "Baixar .txt" : "Download .txt"}
+          </Button>
+          <Button variant="ghost" type="button" onClick={() => setManagingProfiles(true)}>
+            {locale === "pt-br" ? "Perfis" : "Profiles"}
+          </Button>
           <Button variant="ghost" type="button" onClick={() => setSharing(true)}>
             {locale === "pt-br" ? "Compartilhar" : "Share"}
           </Button>
@@ -210,6 +239,7 @@ export default function BuilderPage() {
           {tab === "form" && <Wizard />}
           {tab === "checklist" && <ScorePanel />}
           {tab === "job" && <JobMatchPanel />}
+          {tab === "letter" && <CoverLetterPanel />}
           {tab === "tips" && <TipsPanel />}
         </div>
 
@@ -322,6 +352,15 @@ export default function BuilderPage() {
         <ShareModal data={resumeData} locale={locale} onClose={() => setSharing(false)} />
       )}
 
+      {managingProfiles && (
+        <ProfilesModal
+          currentData={resumeData}
+          locale={locale}
+          onClose={() => setManagingProfiles(false)}
+          onLoad={(data) => loadData(data)}
+        />
+      )}
+
       {confirmingClear && (
         <ConfirmModal
           title={locale === "pt-br" ? "Limpar todos os dados?" : "Clear all data?"}
@@ -341,5 +380,13 @@ export default function BuilderPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function BuilderPage() {
+  return (
+    <Suspense fallback={null}>
+      <BuilderPageContent />
+    </Suspense>
   );
 }
