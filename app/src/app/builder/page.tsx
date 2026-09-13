@@ -15,6 +15,7 @@ import { PdfReviewModal } from "@/components/PdfReviewModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ShareModal } from "@/components/ShareModal";
 import { ProfilesModal } from "@/components/ProfilesModal";
+import { BackupReminderBanner } from "@/components/BackupReminderBanner";
 import { Button } from "@/components/ui";
 import { getResumeData, useResumeStore } from "@/lib/store";
 import { resumeToPlainText } from "@/lib/exportText";
@@ -216,6 +217,8 @@ function BuilderPageContent() {
           </Button>
         </div>
       </header>
+
+      <BackupReminderBanner locale={locale} onBackup={handleExport} />
 
       <div className="print:hidden mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_1fr]">
         <div>
