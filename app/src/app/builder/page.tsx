@@ -65,6 +65,17 @@ function BuilderPageContent() {
     URL.revokeObjectURL(url);
   }
 
+  function handlePrint() {
+    const previousTitle = document.title;
+    document.title = "CV";
+    const restoreTitle = () => {
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", restoreTitle);
+    };
+    window.addEventListener("afterprint", restoreTitle);
+    window.print();
+  }
+
   function handleExportText() {
     const data = getResumeData(useResumeStore.getState());
     const blob = new Blob([resumeToPlainText(data)], { type: "text/plain;charset=utf-8" });
@@ -212,7 +223,7 @@ function BuilderPageContent() {
           <Button variant="ghost" type="button" onClick={() => setConfirmingClear(true)}>
             {locale === "pt-br" ? "Limpar" : "Clear"}
           </Button>
-          <Button type="button" onClick={() => window.print()}>
+          <Button type="button" onClick={handlePrint}>
             {locale === "pt-br" ? "Baixar PDF" : "Download PDF"}
           </Button>
         </div>
