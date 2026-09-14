@@ -7,8 +7,14 @@ export interface PersonalInfo {
   email: string;
   phone: string;
   linkedin: string;
+  /** Custom display text for the LinkedIn link; falls back to the raw URL when empty. */
+  linkedinText: string;
   github: string;
+  /** Custom display text for the GitHub link; falls back to the raw URL when empty. */
+  githubText: string;
   website: string;
+  /** Custom display text for the website link; falls back to the raw URL when empty. */
+  websiteText: string;
 }
 
 export interface Entry {
@@ -35,6 +41,8 @@ export interface ProjectEntry {
   id: string;
   name: string;
   link: string;
+  /** Custom display text for the link (e.g. "ver projeto"); falls back to the raw link when empty. */
+  linkText: string;
   description: string;
 }
 

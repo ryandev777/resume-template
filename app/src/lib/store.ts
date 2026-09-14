@@ -44,7 +44,7 @@ function emptyEducation(): EducationEntry {
 }
 
 function emptyProject(): ProjectEntry {
-  return { id: uid(), name: "", link: "", description: "" };
+  return { id: uid(), name: "", link: "", linkText: "", description: "" };
 }
 
 const initialState: ResumeData = {
@@ -58,8 +58,11 @@ const initialState: ResumeData = {
     email: "",
     phone: "",
     linkedin: "",
+    linkedinText: "",
     github: "",
+    githubText: "",
     website: "",
+    websiteText: "",
   },
   summary: "",
   experiences: [emptyEntry()],

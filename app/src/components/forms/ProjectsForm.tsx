@@ -56,6 +56,15 @@ export function ProjectsForm() {
             </Field>
           </div>
           <div className="mt-3">
+            <Field label={t.labels.projectLinkText}>
+              <Input
+                value={entry.linkText}
+                placeholder={t.placeholders.projectLinkText}
+                onChange={(e) => updateProject(entry.id, { linkText: e.target.value })}
+              />
+            </Field>
+          </div>
+          <div className="mt-3">
             <Field label={t.labels.projectDescription}>
               <Textarea
                 rows={2}

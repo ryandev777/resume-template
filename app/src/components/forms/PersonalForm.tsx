@@ -58,6 +58,13 @@ export function PersonalForm() {
             onChange={(e) => setPersonal({ linkedin: e.target.value })}
           />
         </Field>
+        <Field label={t.labels.linkedinText}>
+          <Input
+            value={personal.linkedinText}
+            placeholder={t.placeholders.linkedinText}
+            onChange={(e) => setPersonal({ linkedinText: e.target.value })}
+          />
+        </Field>
         <Field label={t.labels.github}>
           <Input
             value={personal.github}
@@ -65,11 +72,25 @@ export function PersonalForm() {
             onChange={(e) => setPersonal({ github: e.target.value })}
           />
         </Field>
+        <Field label={t.labels.githubText}>
+          <Input
+            value={personal.githubText}
+            placeholder={t.placeholders.githubText}
+            onChange={(e) => setPersonal({ githubText: e.target.value })}
+          />
+        </Field>
         <Field label={t.labels.website}>
           <Input
             value={personal.website}
             placeholder={t.placeholders.website}
             onChange={(e) => setPersonal({ website: e.target.value })}
+          />
+        </Field>
+        <Field label={t.labels.websiteText}>
+          <Input
+            value={personal.websiteText}
+            placeholder={t.placeholders.websiteText}
+            onChange={(e) => setPersonal({ websiteText: e.target.value })}
           />
         </Field>
       </div>

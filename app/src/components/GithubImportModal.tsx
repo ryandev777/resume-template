@@ -82,6 +82,7 @@ export function GithubImportModal({
       chosen.map((r) => ({
         name: r.name,
         link: r.htmlUrl,
+        linkText: "",
         description: r.description ?? "",
       })),
     );

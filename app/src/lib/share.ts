@@ -171,6 +171,7 @@ function hydrateProjects(items: unknown): ProjectEntry[] {
       id: syntheticId(item.id, "proj", i),
       name: str(item.name),
       link: str(item.link),
+      linkText: str(item.linkText),
       description: str(item.description),
     };
   });
@@ -193,8 +194,11 @@ export function hydrateSharedResume(partial: Partial<ResumeData>): ResumeData {
       email: str(p.email),
       phone: str(p.phone),
       linkedin: str(p.linkedin),
+      linkedinText: str(p.linkedinText),
       github: str(p.github),
+      githubText: str(p.githubText),
       website: str(p.website),
+      websiteText: str(p.websiteText),
     },
     summary: str(partial.summary),
     experiences: hydrateEntries(partial.experiences, "exp"),

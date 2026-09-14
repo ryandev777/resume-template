@@ -96,7 +96,19 @@ function ProjectRow({ entry }: { entry: ProjectEntry }) {
   return (
     <div className="mb-1.5 break-inside-avoid text-[length:calc(11px*var(--rf))] text-slate-800">
       <span className="font-bold text-slate-900">{entry.name}</span>
-      {entry.link && <span className="text-slate-600"> — {entry.link}</span>}
+      {entry.link && (
+        <span className="text-slate-600">
+          {" — "}
+          <a
+            href={ensureProtocol(entry.link)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-600 underline hover:text-slate-900"
+          >
+            {entry.linkText || entry.link}
+          </a>
+        </span>
+      )}
       {entry.description && (
         <p className="whitespace-pre-line text-slate-700">{entry.description}</p>
       )}
@@ -131,13 +143,22 @@ export function ResumeDocument({
       ? { text: state.personal.phone, href: `tel:${state.personal.phone.replace(/[^\d+]/g, "")}` }
       : null,
     state.personal.linkedin
-      ? { text: state.personal.linkedin, href: ensureProtocol(state.personal.linkedin) }
+      ? {
+          text: state.personal.linkedinText || state.personal.linkedin,
+          href: ensureProtocol(state.personal.linkedin),
+        }
       : null,
     state.personal.github
-      ? { text: state.personal.github, href: ensureProtocol(state.personal.github) }
+      ? {
+          text: state.personal.githubText || state.personal.github,
+          href: ensureProtocol(state.personal.github),
+        }
       : null,
     state.personal.website
-      ? { text: state.personal.website, href: ensureProtocol(state.personal.website) }
+      ? {
+          text: state.personal.websiteText || state.personal.website,
+          href: ensureProtocol(state.personal.website),
+        }
       : null,
   ].filter((p): p is ContactItem => p !== null);
 

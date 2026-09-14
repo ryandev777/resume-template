@@ -645,8 +645,11 @@ export function parseResumeText(rawText: string): Partial<ResumeData> {
       email,
       phone,
       linkedin,
+      linkedinText: "",
       github,
+      githubText: "",
       website: "",
+      websiteText: "",
     },
     summary: truncateAtWord(summaryText, 900),
   };
@@ -668,6 +671,7 @@ export function parseResumeText(rawText: string): Partial<ResumeData> {
       id: "",
       name: cleanBullet(header),
       link: "",
+      linkText: "",
       description: buildProjectDescription(body),
     }));
   }
